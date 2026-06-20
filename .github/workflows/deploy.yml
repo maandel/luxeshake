@@ -14,7 +14,7 @@ jobs:
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # If the directory doesn't exist, clone the repo
             if [ ! -d "~/luxeshake" ]; then

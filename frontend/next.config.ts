@@ -8,7 +8,7 @@ try {
     path.resolve(__dirname, "../.env"), // Local monorepo root
     path.resolve(__dirname, "./.env"),  // Docker container root
   ];
-  
+
   for (const envPath of envPaths) {
     if (fs.existsSync(envPath)) {
       const envConfig = fs.readFileSync(envPath, "utf-8");
@@ -26,7 +26,7 @@ try {
           }
         }
       });
-      break; // Found and loaded an .env file
+      break;
     }
   }
 } catch (e) {

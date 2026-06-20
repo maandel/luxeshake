@@ -3,7 +3,7 @@ import './globals.css';
 import { ToastProvider } from '../context/ToastContext';
 import { Libre_Caslon_Text, DM_Sans } from 'next/font/google';
 
-const libreCaslon = Libre_Caslon_Text({ 
+const libreCaslon = Libre_Caslon_Text({
   weight: ['400', '700'],
   subsets: ['latin'],
   variable: '--font-libre-caslon'
@@ -16,8 +16,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'LuxeShake | Artisanal Creamery',
-  description: 'Premium Milkshakes & Drinks — Luxury in every sip.',
+  title: 'LuxeShake',
+  description: '',
 };
 
 export default function RootLayout({

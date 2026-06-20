@@ -23,7 +23,12 @@ class Settings(BaseSettings):
 
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
+
+    @property
+    def ACTIVE_GOOGLE_CLIENT_ID(self) -> str:
+        return self.NEXT_PUBLIC_GOOGLE_CLIENT_ID or self.GOOGLE_CLIENT_ID
 
     # Email (Brevo/SMTP)
     MAIL_USERNAME: str = ""

@@ -16,12 +16,14 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # If the directory doesn't exist, clone the repo
-            if [ ! -d "~/luxeshake" ]; then
-              git clone https://github.com/maandel/luxeshake.git ~/luxeshake
-            fi
-            
+            mkdir -p ~/luxeshake
             cd ~/luxeshake
+            
+            # Initialize git if it's not already a repository
+            if [ ! -d ".git" ]; then
+              git init
+              git remote add origin https://github.com/maandel/luxeshake.git
+            fi
             
             # Pull latest changes
             git fetch --all

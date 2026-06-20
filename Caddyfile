@@ -1,0 +1,7 @@
+luxeshake-api.mandell.tech {
+    reverse_proxy api:8000
+}
+
+luxeshake.mandell.tech {
+    reverse_proxy web:3000
+}

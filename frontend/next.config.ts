@@ -2,27 +2,35 @@ import type { NextConfig } from "next";
 import fs from "fs";
 import path from "path";
 
-// Manually parse and load parent .env if exists
+// Manually parse and load parent or local .env if exists
 try {
-  const envPath = path.resolve(__dirname, "../.env");
-  if (fs.existsSync(envPath)) {
-    const envConfig = fs.readFileSync(envPath, "utf-8");
-    envConfig.split("\n").forEach((line) => {
-      const trimmed = line.trim();
-      if (trimmed && !trimmed.startsWith("#")) {
-        const parts = trimmed.split("=");
-        if (parts.length >= 2) {
-          const key = parts[0].trim();
-          const val = parts.slice(1).join("=").trim();
-          // Remove potential wrapping quotes
-          const cleanedVal = val.replace(/^["']|["']$/g, "");
-          process.env[key] = cleanedVal;
+  const envPaths = [
+    path.resolve(__dirname, "../.env"), // Local monorepo root
+    path.resolve(__dirname, "./.env"),  // Docker container root
+  ];
+  
+  for (const envPath of envPaths) {
+    if (fs.existsSync(envPath)) {
+      const envConfig = fs.readFileSync(envPath, "utf-8");
+      envConfig.split("\n").forEach((line) => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith("#")) {
+          const parts = trimmed.split("=");
+          if (parts.length >= 2) {
+            const key = parts[0].trim();
+            const val = parts.slice(1).join("=").trim();
+            const cleanedVal = val.replace(/^["']|["']$/g, "");
+            if (!process.env[key]) {
+              process.env[key] = cleanedVal;
+            }
+          }
         }
-      }
-    });
+      });
+      break; // Found and loaded an .env file
+    }
   }
 } catch (e) {
-  console.warn("Failed to load root .env file:", e);
+  console.warn("Failed to load .env file in next.config.ts:", e);
 }
 
 const nextConfig: NextConfig = {

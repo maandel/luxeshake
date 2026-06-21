@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LuxeShake Frontend Web Application
 
-## Getting Started
+A premium, modern Next.js client ordering portal and administrative dashboard (**LuxeControl**) featuring a dark-gold theme, customized typography, and micro-interactions.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Local Development Setup
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Prerequisites
+*   Node.js 18+
+*   npm or yarn package manager
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Steps
+1.  Navigate to the frontend directory:
+    ```bash
+    cd frontend
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start the Next.js development server:
+    ```bash
+    npm run dev
+    ```
+    The application will run locally at [http://localhost:3000](http://localhost:3000).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Client State Management (Zustand Stores)
 
-To learn more about Next.js, take a look at the following resources:
+State is managed client-side using **Zustand** stores located in `src/lib/store/`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+*   **`authStore.ts`**: Persists authentication states including `accessToken` and user role (`superadmin`, `manager`, `staff`, `customer`).
+*   **`cartStore.ts`**: Manages customer ordering selections, item additions, quantity modifications, shake sizes (small/large), totals, and checkout payload serialization.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Axios API Client (`src/lib/api.ts`)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+API interactions route through a configured Axios instance:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1.  **Request Interceptor**: Automatically attaches the JWT `access_token` as an `Authorization: Bearer <token>` header to all outgoing requests.
+2.  **Response Interceptor (Silent Refresh)**: If a request fails with a `401 Unauthorized` status (e.g. token expired), the interceptor intercepts the failure, requests a new access token from the backend `/auth/refresh` endpoint using cookies, saves it to Zustand, and replays the original failed request seamlessly.
+
+---
+
+## LuxeControl Portal Routing & Forced Reset
+
+All admin pages are located under the `/luxe-control/` router.
+
+### Forced Password Changes
+The top-level `layout.tsx` validates session status on mount. If the user is flagged with `must_reset_password: true` (e.g., after an administrative credentials reset):
+*   The layout forces a redirect to `/luxe-control/change-password`.
+*   All other routes are blocked.
+*   The layout hides the sidebar menu, header user dropdown, and log-out controls, preventing the administrator from performing any system actions until a new password has been successfully configured.

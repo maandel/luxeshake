@@ -151,6 +151,7 @@ export default function AdminProductsPage() {
         small_price: prodSmallPrice,
         big_price: prodBigPrice,
         image_url: prodImageUrl || null,
+        image_path: editingProduct ? editingProduct.image_path : null,
         tag: prodTag,
         sort_order: prodSortOrder,
         is_active: prodActive
@@ -319,7 +320,7 @@ export default function AdminProductsPage() {
                 {products.map((p) => {
                   const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
                   const cat = categories.find((c) => c.id === p.category_id);
-                  const img = p.image_path ? `${BACKEND_URL}${p.image_path}` : (p.image_url || '/placeholder.jpg');
+                  const img = p.image_path ? `${BACKEND_URL}${p.image_path}` : (p.image_url || 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=400');
                   return (
                     <tr key={p.id} style={{ borderBottom: '1px solid rgba(201, 150, 62, 0.08)' }}>
                       <td style={{ padding: '0.8rem 0.5rem' }}>

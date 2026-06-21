@@ -154,6 +154,83 @@ class EmailService:
         await fm.send_message(message)
 
     @staticmethod
+    async def send_ticket_created_email(
+        email: str, submitter_name: str, ticket_number: str, subject: str
+    ):
+        email_subject = f"Support Ticket Received — {ticket_number}"
+        tracking_link = f"{settings.FRONTEND_URL}/track-complaint"
+        html_content = (
+            _load_template("ticket_created.html")
+            .replace("{{submitter_name}}", submitter_name)
+            .replace("{{ticket_number}}", ticket_number)
+            .replace("{{subject}}", subject)
+            .replace("{{tracking_link}}", tracking_link)
+        )
+
+        if not EmailService._is_configured():
+            logger.warning(
+                "Email service not configured. Ticket created email not sent."
+            )
+            print(f"\n[EMAIL MOCK] Ticket Created for {email}: {ticket_number}\n")  # noqa :E501
+            return
+
+        if settings.BREVO_API_KEY:
+            success = await EmailService._send_via_http_api(
+                email, email_subject, html_content
+            )
+            if success:
+                return
+
+        message = MessageSchema(
+            subject=email_subject,
+            recipients=[email],
+            body=html_content,
+            subtype=MessageType.html,
+        )
+        fm = FastMail(mail_config)
+        await fm.send_message(message)
+
+    @staticmethod
+    async def send_ticket_reply_email(
+        email: str,
+        submitter_name: str,
+        ticket_number: str,
+        subject: str,
+        reply_text: str,
+    ):
+        email_subject = f"Update on your Ticket — {ticket_number}"
+        tracking_link = f"{settings.FRONTEND_URL}/track-complaint"
+        html_content = (
+            _load_template("ticket_replied.html")
+            .replace("{{submitter_name}}", submitter_name)
+            .replace("{{ticket_number}}", ticket_number)
+            .replace("{{subject}}", subject)
+            .replace("{{reply_text}}", reply_text)
+            .replace("{{tracking_link}}", tracking_link)
+        )
+
+        if not EmailService._is_configured():
+            logger.warning("Email service not configured. Ticket reply email not sent.")  # noqa :E501
+            print(f"\n[EMAIL MOCK] Ticket Reply for {email}: {ticket_number}\n")  # noqa :E501
+            return
+
+        if settings.BREVO_API_KEY:
+            success = await EmailService._send_via_http_api(
+                email, email_subject, html_content
+            )
+            if success:
+                return
+
+        message = MessageSchema(
+            subject=email_subject,
+            recipients=[email],
+            body=html_content,
+            subtype=MessageType.html,
+        )
+        fm = FastMail(mail_config)
+        await fm.send_message(message)
+
+    @staticmethod
     async def send_order_confirmation(email: str, order: Order):
         subject = f"Your LuxeShake Order is Confirmed!  — #{order.order_number}"  # noqa: E501
 

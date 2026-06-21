@@ -825,6 +825,8 @@ export default function CheckoutPage() {
                               onChange={(e) => setFirstName(e.target.value)}
                               onFocus={() => setFirstNameFocused(true)}
                               onBlur={() => setFirstNameFocused(false)}
+                              readOnly={!!accessToken && !!firstName}
+                              style={accessToken && firstName ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                               required
                             />
                           </div>
@@ -842,6 +844,8 @@ export default function CheckoutPage() {
                               onChange={(e) => setLastName(e.target.value)}
                               onFocus={() => setLastNameFocused(true)}
                               onBlur={() => setLastNameFocused(false)}
+                              readOnly={!!accessToken && !!lastName}
+                              style={accessToken && lastName ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                             />
                           </div>
                         </div>
@@ -860,6 +864,8 @@ export default function CheckoutPage() {
                               onChange={(e) => setEmail(e.target.value)}
                               onFocus={() => setEmailFocused(true)}
                               onBlur={() => setEmailFocused(false)}
+                              readOnly={!!accessToken && !!email}
+                              style={accessToken && email ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                               required
                             />
                           </div>

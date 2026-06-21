@@ -36,9 +36,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Ensure no trailing slash issues
 frontend_origin = settings.FRONTEND_URL.rstrip("/")
-allowed_origins = [frontend_origin, f"{frontend_origin}/", "http://localhost:3000"]
+allowed_origins = [
+    frontend_origin,
+    f"{frontend_origin}/",
+    "http://localhost:3000",
+]
 
 app.add_middleware(
     CORSMiddleware,

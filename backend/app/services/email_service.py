@@ -607,3 +607,41 @@ class EmailService:
         )
         fm = FastMail(mail_config)
         await fm.send_message(message)
+
+    @staticmethod
+    async def send_admin_password_reset(email: str, temp_password: str):
+        subject = "Your LuxeControl Password Has Been Reset"
+        login_link = f"{settings.FRONTEND_URL}/luxe-control"
+        html_content = (
+            _load_template("admin_password_reset.html")
+            .replace("{{temp_password}}", temp_password)
+            .replace("{{login_link}}", login_link)
+        )
+
+        if not EmailService._is_configured():
+            logger.warning(
+                f"Email service not configured. Admin Password Reset email to "
+                f"{email} was not sent."
+            )
+            print(
+                f"\n[EMAIL MOCK] Admin Password Reset for {email}: "
+                f"Temp Password: {temp_password} "
+                f"(Login Link: {login_link})\n"
+            )
+            return
+
+        if settings.BREVO_API_KEY:
+            success = await EmailService._send_via_http_api(
+                email, subject, html_content
+            )
+            if success:
+                return
+
+        message = MessageSchema(
+            subject=subject,
+            recipients=[email],
+            body=html_content,
+            subtype=MessageType.html,
+        )
+        fm = FastMail(mail_config)
+        await fm.send_message(message)

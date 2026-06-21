@@ -95,7 +95,7 @@ function getInitials(name: string) {
 
 export default function AccountPage() {
   const router = useRouter();
-  const { accessToken, role, clearAuth } = useAuthStore();
+  const { accessToken, role, setAuth, clearAuth } = useAuthStore();
   const { showToast } = useToast();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -131,25 +131,46 @@ export default function AccountPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
-    if (!accessToken) { router.push('/login'); return; }
-    fetchProfile();
-  }, [accessToken]);
+    const initializeAuthAndProfile = async () => {
+      let currentToken = accessToken;
 
-  const fetchProfile = async () => {
-    try {
-      setLoadingProfile(true);
-      const resp = await api.get('/users/me');
-      setProfile(resp.data);
-      setFullName(resp.data.full_name);
-      setEmail(resp.data.email);
-    } catch {
-      showToast('Session expired. Please log in again.', 'error');
-      clearAuth();
-      router.push('/login');
-    } finally {
-      setLoadingProfile(false);
-    }
-  };
+      if (!currentToken) {
+        try {
+          const resp = await api.post('/auth/refresh');
+          const { access_token, role: newRole } = resp.data;
+          setAuth(access_token, newRole);
+          currentToken = access_token;
+        } catch (refreshErr) {
+          clearAuth();
+          router.push('/login');
+          return;
+        }
+      }
+
+      if (!currentToken) {
+        clearAuth();
+        router.push('/login');
+        return;
+      }
+
+      // Fetch profile
+      try {
+        setLoadingProfile(true);
+        const resp = await api.get('/users/me');
+        setProfile(resp.data);
+        setFullName(resp.data.full_name);
+        setEmail(resp.data.email);
+      } catch (profileErr) {
+        showToast('Session expired. Please log in again.', 'error');
+        clearAuth();
+        router.push('/login');
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    initializeAuthAndProfile();
+  }, [accessToken]);
 
   const fetchOrders = async () => {
     try {

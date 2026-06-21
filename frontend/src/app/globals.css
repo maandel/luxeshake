@@ -106,26 +106,33 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
+
   .glass-panel {
     background: rgba(45, 27, 20, 0.6);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
+
   .primary-glow {
     box-shadow: 0px 4px 20px rgba(197, 160, 40, 0.3);
   }
+
   .gold-glow {
     box-shadow: 0px 4px 20px rgba(197, 160, 40, 0.2);
   }
+
   .gold-glow-hover:hover {
     box-shadow: 0px 4px 24px rgba(197, 160, 40, 0.4);
   }
+
   .parallax-slow {
     transform: translateY(var(--scroll-offset, 0));
   }
+
   .nav-link-underline {
     position: relative;
   }
+
   .nav-link-underline::after {
     content: '';
     position: absolute;
@@ -136,6 +143,7 @@
     background-color: var(--color-gold-leaf);
     transition: width 0.3s ease;
   }
+
   .nav-link-underline:hover::after {
     width: 100%;
   }
@@ -150,9 +158,11 @@ body {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--color-cacao-black);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--color-gold-leaf);
   border-radius: 10px;
@@ -177,7 +187,9 @@ body {
 
 /* -- Global spinner animations -- */
 @keyframes globalSpin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Admin pages use .spinner (inline on buttons and loading areas) */
@@ -206,17 +218,20 @@ body {
 
 /* Skeleton shimmer loader */
 @keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position:  400px 0; }
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 400px 0;
+  }
 }
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(212,175,55,0.04) 25%,
-    rgba(212,175,55,0.1)  50%,
-    rgba(212,175,55,0.04) 75%
-  );
+  background: linear-gradient(90deg,
+      rgba(212, 175, 55, 0.04) 25%,
+      rgba(212, 175, 55, 0.1) 50%,
+      rgba(212, 175, 55, 0.04) 75%);
   background-size: 400px 100%;
   animation: shimmer 1.4s ease infinite;
   border-radius: 6px;
@@ -249,7 +264,7 @@ body {
   border: 1px solid rgba(212, 175, 55, 0.22);
   border-radius: 24px;
   width: 100%;
-  box-shadow: 
+  box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.7),
     inset 0 1px 0 rgba(212, 175, 55, 0.08);
   display: flex;
@@ -312,9 +327,11 @@ body {
 .order-modal-body::-webkit-scrollbar {
   width: 5px;
 }
+
 .order-modal-body::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .order-modal-body::-webkit-scrollbar-thumb {
   background: rgba(212, 175, 55, 0.15);
   border-radius: 10px;
@@ -335,7 +352,7 @@ body {
   text-transform: uppercase;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-  box-shadow: 0px 4px 20px rgba(212,175,55,0.3);
+  box-shadow: 0px 4px 20px rgba(212, 175, 55, 0.3);
   margin-top: 1.5rem;
   display: flex;
   align-items: center;
@@ -345,7 +362,7 @@ body {
 
 .submit-order-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0px 8px 24px rgba(212,175,55,0.45);
+  box-shadow: 0px 8px 24px rgba(212, 175, 55, 0.45);
 }
 
 .submit-order-btn:active:not(:disabled) {
@@ -358,12 +375,14 @@ body {
 }
 
 /* Select wraps and dropdowns */
-.fulfillment-select-wrap, .area-select-wrap {
+.fulfillment-select-wrap,
+.area-select-wrap {
   position: relative;
   width: 100%;
 }
 
-.fulfillment-select-wrap::after, .area-select-wrap::after {
+.fulfillment-select-wrap::after,
+.area-select-wrap::after {
   content: '▼';
   font-size: 0.6rem;
   color: #99907c;
@@ -374,7 +393,8 @@ body {
   pointer-events: none;
 }
 
-.fulfillment-select, .area-select {
+.fulfillment-select,
+.area-select {
   width: 100%;
   background: rgba(13, 8, 4, 0.8) !important;
   border: 1px solid rgba(212, 175, 55, 0.15) !important;
@@ -390,12 +410,14 @@ body {
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.fulfillment-select:focus, .area-select:focus {
+.fulfillment-select:focus,
+.area-select:focus {
   border-color: rgba(212, 175, 55, 0.5) !important;
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.08) !important;
 }
 
-.fulfillment-select option, .area-select option {
+.fulfillment-select option,
+.area-select option {
   background: #16120b;
   color: #eae1d4;
 }

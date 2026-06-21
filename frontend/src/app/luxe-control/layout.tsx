@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '../../lib/store/authStore';
 import { useToast } from '../../context/ToastContext';
+import { api } from '../../lib/api';
 
 const NAV_ICONS: Record<string, string> = {
   '/luxe-control/dashboard': 'dashboard',
@@ -23,24 +24,76 @@ export default function LuxeControlLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { accessToken, role, clearAuth } = useAuthStore();
+  const { accessToken, role, setAuth, clearAuth } = useAuthStore();
   const { showToast } = useToast();
   const [authorized, setAuthorized] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [mustResetPassword, setMustResetPassword] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const isLoginRoute = pathname === '/luxe-control';
 
   useEffect(() => {
-    if (isLoginRoute) { setAuthorized(true); return; }
-    if (!accessToken) { router.push('/luxe-control'); return; }
-    if (!['superadmin', 'manager', 'staff'].includes(role || '')) {
-      showToast('Unauthorized access.', 'error');
-      clearAuth();
-      router.push('/luxe-control');
+    if (isLoginRoute) {
+      setAuthorized(true);
+      setProfileLoading(false);
       return;
     }
-    setAuthorized(true);
+
+    const checkPasswordResetStatus = async () => {
+      let currentToken = accessToken;
+
+      // Attempt token refresh if not logged in memory (e.g. on page refresh)
+      if (!currentToken) {
+        try {
+          const resp = await api.post('/auth/refresh');
+          const { access_token, role: newRole } = resp.data;
+          setAuth(access_token, newRole);
+          currentToken = access_token;
+        } catch (refreshErr) {
+          clearAuth();
+          router.push('/luxe-control');
+          return;
+        }
+      }
+
+      if (!currentToken) {
+        clearAuth();
+        router.push('/luxe-control');
+        return;
+      }
+
+      // Check role permissions
+      const currentRole = useAuthStore.getState().role;
+      if (!['superadmin', 'manager', 'staff'].includes(currentRole || '')) {
+        showToast('Unauthorized access.', 'error');
+        clearAuth();
+        router.push('/luxe-control');
+        return;
+      }
+
+      try {
+        const resp = await api.get('/users/me');
+        if (resp.data?.must_reset_password) {
+          setMustResetPassword(true);
+          if (pathname !== '/luxe-control/change-password') {
+            router.push('/luxe-control/change-password');
+          }
+        } else {
+          setMustResetPassword(false);
+        }
+      } catch (err: any) {
+        showToast('Session validation failed. Please login again.', 'error');
+        clearAuth();
+        router.push('/luxe-control');
+      } finally {
+        setProfileLoading(false);
+        setAuthorized(true);
+      }
+    };
+
+    checkPasswordResetStatus();
   }, [accessToken, role, pathname]);
 
   const handleLogout = () => {
@@ -49,7 +102,7 @@ export default function LuxeControlLayout({
     router.push('/luxe-control');
   };
 
-  if (!authorized) {
+  if (!authorized || (accessToken && profileLoading)) {
     return (
       <div style={{ background: '#0D0804', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{
@@ -65,6 +118,16 @@ export default function LuxeControlLayout({
   }
 
   if (isLoginRoute) return <>{children}</>;
+
+  if (mustResetPassword) {
+    return (
+      <div style={{ background: '#0D0804', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div style={{ width: '100%', maxWidth: '500px' }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   const menuItems = [
     { label: 'Dashboard', path: '/luxe-control/dashboard' },
@@ -641,6 +704,12 @@ export default function LuxeControlLayout({
                     <div className="lc-role-dot" />
                     {roleLabel[role || ''] || role}
                   </div>
+                  <Link href="/luxe-control/change-password" onClick={() => setDropdownOpen(false)} style={{ textDecoration: 'none' }}>
+                    <button className="lc-logout-btn" style={{ margin: 0, padding: '0.6rem 0.8rem', width: '100%', background: 'rgba(212, 175, 55, 0.05)', justifyContent: 'center', border: '1px solid rgba(212, 175, 55, 0.1)', color: '#eae1d4' }}>
+                      <span className="lc-logout-icon" style={{ fontSize: '1.1rem' }}>key</span>
+                      Change Password
+                    </button>
+                  </Link>
                   <button onClick={handleLogout} className="lc-logout-btn" style={{ margin: 0, padding: '0.6rem 0.8rem', width: '100%', background: 'rgba(212, 175, 55, 0.05)', justifyContent: 'center', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
                     <span className="lc-logout-icon" style={{ fontSize: '1.1rem' }}>logout</span>
                     Sign Out

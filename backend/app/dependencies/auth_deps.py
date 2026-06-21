@@ -10,8 +10,10 @@ from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# Configure OAuth2 scheme
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="api/v1/auth/login",
+    auto_error=False,
+)
 
 
 async def get_current_user(
@@ -37,18 +39,29 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    result = await db.execute(select(User).where(User.id == token_data.user_id))
+    result = await db.execute(select(User).where(User.id == token_data.user_id))  # noqa: E501
     user = result.scalars().first()
     if user is None:
         raise credentials_exception
     return user
 
 
-async def get_current_active_user(
+async def get_current_active_user_basic(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+async def get_current_active_user(
+    current_user: Annotated[User, Depends(get_current_active_user_basic)],
+) -> User:
+    if current_user.must_reset_password:
+        raise HTTPException(
+            status_code=status.HTTP_412_PRECONDITION_FAILED,
+            detail="Password reset required",
+        )
     return current_user
 
 
@@ -71,7 +84,6 @@ async def get_optional_user(
         return None
 
 
-# Role checkers
 def require_role(roles: list[str]):
     async def role_checker(
         current_user: Annotated[User, Depends(get_current_active_user)],

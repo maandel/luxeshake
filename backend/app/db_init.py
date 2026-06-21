@@ -15,6 +15,11 @@ async def init_db():
                 "ALTER TABLE orders ADD COLUMN IF NOT EXISTS driver_phone VARCHAR(50);"  # noqa: E501
             )
         )  # noqa: E501
+        await conn.execute(
+            text(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS must_reset_password BOOLEAN NOT NULL DEFAULT FALSE;"  # noqa: E501
+            )
+        )  # noqa: E501
 
 
 async def seed_db(db: AsyncSession):

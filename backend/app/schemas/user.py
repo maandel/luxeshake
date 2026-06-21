@@ -23,6 +23,7 @@ class UserResponse(UserBase):
     role: str
     is_active: bool
     is_email_verified: bool
+    must_reset_password: bool
     created_at: datetime
     updated_at: datetime
 

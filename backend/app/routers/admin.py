@@ -15,8 +15,16 @@ from app.models.user import User
 from app.schemas.order import StoreSettingsResponse, StoreSettingsUpdate
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.services.cache import cache_get, cache_set
+from app.services.email_service import EmailService
 from app.utils.security import get_password_hash
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Query,
+    status,
+)
 from fastapi.responses import StreamingResponse
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -165,6 +173,45 @@ async def delete_user(
     return {"detail": "User hard deleted successfully"}
 
 
+@router.post("/users/{id}/reset-password")
+async def reset_user_password(
+    id: uuid.UUID,
+    superadmin: Annotated[User, Depends(require_superadmin)],
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.id == id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.id == superadmin.id:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot reset your own password. Use the Change Password page.",  # noqa: E501
+        )
+
+    import secrets
+    import string
+
+    alphabet = string.ascii_letters + string.digits
+    temp_password = "".join(secrets.choice(alphabet) for _ in range(12))
+
+    user.password_hash = get_password_hash(temp_password)
+    user.must_reset_password = True
+    await db.commit()
+
+    background_tasks.add_task(
+        EmailService.send_admin_password_reset,
+        email=user.email,
+        temp_password=temp_password,
+    )
+
+    return {
+        "detail": "Password reset successfully. Email sent to user with credentials."  # noqa: E501
+    }
+
+
 @router.get("/analytics/summary")
 async def get_analytics_summary(
     manager: Annotated[User, Depends(require_manager_or_above)],
@@ -174,7 +221,6 @@ async def get_analytics_summary(
     if cached is not None:
         return cached
 
-    # Today's Revenue
     today_start = datetime.now(UTC).replace(
         hour=0,
         minute=0,
@@ -191,13 +237,11 @@ async def get_analytics_summary(
     )
     today_revenue = rev_res.scalar() or 0
 
-    # Total Orders Today
     ord_res = await db.execute(
         select(func.count(Order.id)).where(Order.created_at >= today_start)
     )
     today_orders = ord_res.scalar() or 0
 
-    # Pending Orders count
     pending_res = await db.execute(
         select(func.count(Order.id)).where(Order.status == "pending")
     )

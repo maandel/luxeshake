@@ -1,7 +1,10 @@
 from typing import Annotated
 
 from app.database import get_db
-from app.dependencies.auth_deps import get_current_active_user
+from app.dependencies.auth_deps import (
+    get_current_active_user,
+    get_current_active_user_basic,
+)
 from app.models.user import User
 from app.schemas.user import PasswordUpdate, UserResponse, UserUpdate
 from app.utils.security import get_password_hash, verify_password
@@ -12,7 +15,12 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(current_user: Annotated[User, Depends(get_current_active_user)]):
+async def get_me(
+    current_user: Annotated[
+        User,
+        Depends(get_current_active_user_basic),
+    ],
+):
     return current_user
 
 
@@ -35,7 +43,7 @@ async def update_me(
 @router.put("/me/password")
 async def update_password(
     pwd_in: PasswordUpdate,
-    current_user: Annotated[User, Depends(get_current_active_user)],
+    current_user: Annotated[User, Depends(get_current_active_user_basic)],
     db: AsyncSession = Depends(get_db),
 ):
     if not current_user.password_hash:
@@ -46,10 +54,12 @@ async def update_password(
 
     if not verify_password(pwd_in.old_password, current_user.password_hash):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect old password"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect old password",
         )
 
     current_user.password_hash = get_password_hash(pwd_in.new_password)
+    current_user.must_reset_password = False
     await db.commit()
 
     return {"detail": "Password updated successfully"}

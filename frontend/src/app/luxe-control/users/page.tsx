@@ -36,6 +36,12 @@ export default function AdminUsersPage() {
     userId: string | null;
   }>({ isOpen: false, userId: null });
 
+  const [resetPwdModalState, setResetPwdModalState] = useState<{
+    isOpen: boolean;
+    userId: string | null;
+    userEmail: string | null;
+  }>({ isOpen: false, userId: null, userEmail: null });
+
   // Matrix description state
   const [selectedPermission, setSelectedPermission] = useState<string | null>(null);
 
@@ -117,6 +123,24 @@ export default function AdminUsersPage() {
       fetchUsers();
     } catch (err: any) {
       showToast('Deletion failed.', 'error');
+    }
+  };
+
+  const triggerResetPassword = (id: string, email: string) => {
+    setResetPwdModalState({ isOpen: true, userId: id, userEmail: email });
+  };
+
+  const executeResetPassword = async () => {
+    const id = resetPwdModalState.userId;
+    if (!id) return;
+    setResetPwdModalState({ isOpen: false, userId: null, userEmail: null });
+
+    try {
+      await api.post(`/admin/users/${id}/reset-password`);
+      showToast('Password reset successfully. Email sent to user.', 'success');
+      fetchUsers();
+    } catch (err: any) {
+      showToast(err.response?.data?.detail || 'Reset failed.', 'error');
     }
   };
 
@@ -238,6 +262,9 @@ export default function AdminUsersPage() {
                         <td style={{ padding: '0.8rem 0.5rem' }}>
                           <button onClick={() => handleToggleActivation(u.id)} className="btn-outline" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem', marginRight: '0.5rem' }}>
                             {u.is_active ? 'Deactivate' : 'Activate'}
+                          </button>
+                          <button onClick={() => triggerResetPassword(u.id, u.email)} className="btn-outline" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem', marginRight: '0.5rem' }}>
+                            Reset Password
                           </button>
                           <button onClick={() => triggerDeleteUser(u.id)} className="confirm-cancel-btn" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem' }}>
                             Delete
@@ -369,6 +396,17 @@ export default function AdminUsersPage() {
         isDangerous={true}
         onConfirm={executeDeleteUser}
         onCancel={() => setConfirmModalState({ isOpen: false, userId: null })}
+      />
+
+      {/* CONFIRM RESET PASSWORD MODAL */}
+      <ConfirmModal
+        isOpen={resetPwdModalState.isOpen}
+        title="Reset User Password"
+        message={`Are you sure you want to reset the password for ${resetPwdModalState.userEmail}? A new 12-character random temporary password will be generated and emailed to them, and they will be forced to update it on their next login.`}
+        confirmText="Reset Password"
+        isDangerous={false}
+        onConfirm={executeResetPassword}
+        onCancel={() => setResetPwdModalState({ isOpen: false, userId: null, userEmail: null })}
       />
     </div>
   );

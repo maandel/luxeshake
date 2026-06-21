@@ -116,9 +116,17 @@ async def admin_create_product(
     new_product = Product(**product_in.model_dump())
     db.add(new_product)
     await db.commit()
-    await db.refresh(new_product)
+    
+    # Refetch with category to satisfy ProductResponse
+    result = await db.execute(
+        select(Product)
+        .options(selectinload(Product.category))
+        .where(Product.id == new_product.id)
+    )
+    loaded_product = result.scalars().first()
+    
     await cache_invalidate("products:")
-    return new_product
+    return loaded_product
 
 
 @router.put("/admin/products/{id}", response_model=ProductResponse)
@@ -128,7 +136,11 @@ async def admin_update_product(
     manager: Annotated[dict, Depends(require_manager_or_above)],
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Product).where(Product.id == id))
+    result = await db.execute(
+        select(Product)
+        .options(selectinload(Product.category))
+        .where(Product.id == id)
+    )
     product = result.scalars().first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")

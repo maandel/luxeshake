@@ -541,7 +541,7 @@ export default function LoginPage() {
                 <p className="auth-form-subtitle">Enter your credentials to continue</p>
                 <div className="auth-gold-rule" />
 
-                <form onSubmit={handleLogin} method="POST" action="">
+                <form onSubmit={handleLogin}>
                   <div className="auth-field">
                     <label htmlFor="user-email" className="auth-label">Email Address</label>
                     <div className="auth-input-wrap">
@@ -554,7 +554,7 @@ export default function LoginPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        autoComplete="email"
+                        autoComplete="username"
                       />
                     </div>
                   </div>

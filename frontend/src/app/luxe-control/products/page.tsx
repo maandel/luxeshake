@@ -37,11 +37,9 @@ export default function AdminProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modals / Form State
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  
-  // Product form fields
+
   const [prodName, setProdName] = useState('');
   const [prodDesc, setProdDesc] = useState('');
   const [prodCatId, setProdCatId] = useState('');
@@ -53,7 +51,6 @@ export default function AdminProductsPage() {
   const [prodActive, setProdActive] = useState(true);
   const [savingProduct, setSavingProduct] = useState(false);
 
-  // Category Form State
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [catName, setCatName] = useState('');
@@ -62,11 +59,9 @@ export default function AdminProductsPage() {
   const [catActive, setCatActive] = useState(true);
   const [savingCategory, setSavingCategory] = useState(false);
 
-  // Image upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // Confirm Modal state
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     type: 'product' | 'category' | null;
@@ -172,7 +167,6 @@ export default function AdminProductsPage() {
         showToast('Product created successfully.', 'success');
       }
 
-      // Handle file upload if exists
       if (selectedFile) {
         setUploadingImage(true);
         const formData = new FormData();
@@ -261,10 +255,10 @@ export default function AdminProductsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: '2.2rem', color: 'var(--gold-lt)', margin: 0 }}>
-            Catalog Management
+            Product Management
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.3rem' }}>
-            Manage categories, shake sizes, prices, and upload premium assets.
+            Manage categories, product sizes, prices, and upload premium assets.
           </p>
         </div>
 
@@ -274,7 +268,7 @@ export default function AdminProductsPage() {
             className={activeSubTab === 'products' ? 'size-opt active' : 'size-opt'}
             style={{ padding: '0.5rem 1rem' }}
           >
-            Drinks
+            Products
           </button>
           <button
             onClick={() => setActiveSubTab('categories')}
@@ -291,7 +285,7 @@ export default function AdminProductsPage() {
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
         {activeSubTab === 'products' ? (
           <button onClick={openNewProduct} className="btn-gold" style={{ padding: '0.5rem 1.2rem', fontSize: '0.75rem' }}>
-            + Add New Shake
+            + Add New Product
           </button>
         ) : (
           <button onClick={openNewCategory} className="btn-gold" style={{ padding: '0.5rem 1.2rem', fontSize: '0.75rem' }}>

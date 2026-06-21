@@ -69,7 +69,7 @@ export default function LuxeControlLayout({
   const menuItems = [
     { label: 'Dashboard', path: '/luxe-control/dashboard' },
     { label: 'Orders', path: '/luxe-control/orders' },
-    { label: 'Drinks & Menu', path: '/luxe-control/products' },
+    { label: 'Products', path: '/luxe-control/products' },
     { label: 'Delivery Areas', path: '/luxe-control/delivery' },
     { label: 'Support Tickets', path: '/luxe-control/tickets' },
   ];

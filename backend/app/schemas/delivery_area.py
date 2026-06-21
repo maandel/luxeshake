@@ -11,7 +11,7 @@ class DeliveryAreaBase(BaseModel):
 
 
 class DeliveryAreaCreate(DeliveryAreaBase):
-    pass
+    is_active: bool = True
 
 
 class DeliveryAreaResponse(DeliveryAreaBase):

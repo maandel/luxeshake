@@ -465,7 +465,7 @@ export default function AdminTicketsPage() {
                           placeholder="Type your response here..."
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
-                          style={{ minHeight: '120px', resize: 'none', fontSize: '0.95rem' }}
+                          style={{ width: '100%', minHeight: '200px', resize: 'vertical', fontSize: '0.95rem' }}
                           required
                         />
                       </div>

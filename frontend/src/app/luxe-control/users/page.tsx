@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../../lib/api';
 import { useAuthStore } from '../../../lib/store/authStore';
 import { useToast } from '../../../context/ToastContext';
+import ConfirmModal from '../../../components/admin/ConfirmModal';
 
 interface User {
   id: string;
@@ -28,6 +29,12 @@ export default function AdminUsersPage() {
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Confirm Modal state
+  const [confirmModalState, setConfirmModalState] = useState<{
+    isOpen: boolean;
+    userId: string | null;
+  }>({ isOpen: false, userId: null });
 
   // Matrix description state
   const [selectedPermission, setSelectedPermission] = useState<string | null>(null);
@@ -95,8 +102,15 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleDeleteUser = async (id: string) => {
-    if (!confirm('Are you sure you want to permanently delete this user account?')) return;
+  const triggerDeleteUser = (id: string) => {
+    setConfirmModalState({ isOpen: true, userId: id });
+  };
+
+  const executeDeleteUser = async () => {
+    const id = confirmModalState.userId;
+    if (!id) return;
+    setConfirmModalState({ isOpen: false, userId: null });
+
     try {
       await api.delete(`/admin/users/${id}`);
       showToast('User permanently deleted.', 'info');
@@ -225,7 +239,7 @@ export default function AdminUsersPage() {
                           <button onClick={() => handleToggleActivation(u.id)} className="btn-outline" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem', marginRight: '0.5rem' }}>
                             {u.is_active ? 'Deactivate' : 'Activate'}
                           </button>
-                          <button onClick={() => handleDeleteUser(u.id)} className="confirm-cancel-btn" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem' }}>
+                          <button onClick={() => triggerDeleteUser(u.id)} className="confirm-cancel-btn" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem' }}>
                             Delete
                           </button>
                         </td>
@@ -345,6 +359,17 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
+
+      {/* CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={confirmModalState.isOpen}
+        title="Delete User"
+        message="Are you sure you want to permanently delete this user account? This action cannot be undone."
+        confirmText="Delete Account"
+        isDangerous={true}
+        onConfirm={executeDeleteUser}
+        onCancel={() => setConfirmModalState({ isOpen: false, userId: null })}
+      />
     </div>
   );
 }

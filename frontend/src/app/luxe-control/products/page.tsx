@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../../lib/api';
 import { useAuthStore } from '../../../lib/store/authStore';
 import { useToast } from '../../../context/ToastContext';
+import ConfirmModal from '../../../components/admin/ConfirmModal';
 
 interface Category {
   id: string;
@@ -22,6 +23,7 @@ interface Product {
   big_price: number;
   image_url: string | null;
   image_path: string | null;
+  tag: string;
   sort_order: number;
   is_active: boolean;
 }
@@ -46,6 +48,7 @@ export default function AdminProductsPage() {
   const [prodSmallPrice, setProdSmallPrice] = useState(0);
   const [prodBigPrice, setProdBigPrice] = useState(0);
   const [prodImageUrl, setProdImageUrl] = useState('');
+  const [prodTag, setProdTag] = useState('Drink');
   const [prodSortOrder, setProdSortOrder] = useState(0);
   const [prodActive, setProdActive] = useState(true);
   const [savingProduct, setSavingProduct] = useState(false);
@@ -62,6 +65,13 @@ export default function AdminProductsPage() {
   // Image upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Confirm Modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    type: 'product' | 'category' | null;
+    targetId: string | null;
+  }>({ isOpen: false, type: null, targetId: null });
 
   const fetchData = async () => {
     setLoading(true);
@@ -91,6 +101,7 @@ export default function AdminProductsPage() {
     setProdSmallPrice(0);
     setProdBigPrice(0);
     setProdImageUrl('');
+    setProdTag('Drink');
     setProdSortOrder(products.length);
     setProdActive(true);
     setSelectedFile(null);
@@ -105,6 +116,7 @@ export default function AdminProductsPage() {
     setProdSmallPrice(p.small_price);
     setProdBigPrice(p.big_price);
     setProdImageUrl(p.image_url || '');
+    setProdTag(p.tag || 'Drink');
     setProdSortOrder(p.sort_order);
     setProdActive(p.is_active);
     setSelectedFile(null);
@@ -144,6 +156,7 @@ export default function AdminProductsPage() {
         small_price: prodSmallPrice,
         big_price: prodBigPrice,
         image_url: prodImageUrl || null,
+        tag: prodTag,
         sort_order: prodSortOrder,
         is_active: prodActive
       };
@@ -211,25 +224,35 @@ export default function AdminProductsPage() {
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!confirm('Are you sure you want to deactivate this product?')) return;
-    try {
-      await api.delete(`/admin/products/${id}`);
-      showToast('Product deactivated.', 'info');
-      fetchData();
-    } catch (err: any) {
-      showToast('Deactivation failed.', 'error');
-    }
+  const triggerDeleteProduct = (id: string) => {
+    setConfirmModal({ isOpen: true, type: 'product', targetId: id });
   };
 
-  const handleDeleteCategory = async (id: string) => {
-    if (!confirm('Are you sure you want to deactivate this category?')) return;
-    try {
-      await api.delete(`/admin/categories/${id}`);
-      showToast('Category deactivated.', 'info');
-      fetchData();
-    } catch (err: any) {
-      showToast('Deactivation failed.', 'error');
+  const triggerDeleteCategory = (id: string) => {
+    setConfirmModal({ isOpen: true, type: 'category', targetId: id });
+  };
+
+  const executeDelete = async () => {
+    const { type, targetId } = confirmModal;
+    if (!targetId || !type) return;
+    setConfirmModal({ isOpen: false, type: null, targetId: null });
+
+    if (type === 'product') {
+      try {
+        await api.delete(`/admin/products/${targetId}`);
+        showToast('Product deactivated.', 'info');
+        fetchData();
+      } catch (err: any) {
+        showToast('Deactivation failed.', 'error');
+      }
+    } else if (type === 'category') {
+      try {
+        await api.delete(`/admin/categories/${targetId}`);
+        showToast('Category deactivated.', 'info');
+        fetchData();
+      } catch (err: any) {
+        showToast('Deactivation failed.', 'error');
+      }
     }
   };
 
@@ -331,7 +354,7 @@ export default function AdminProductsPage() {
                           Edit
                         </button>
                         {p.is_active && (
-                          <button onClick={() => handleDeleteProduct(p.id)} className="confirm-cancel-btn" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem' }}>
+                          <button onClick={() => triggerDeleteProduct(p.id)} className="confirm-cancel-btn" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem' }}>
                             Deactivate
                           </button>
                         )}
@@ -379,7 +402,7 @@ export default function AdminProductsPage() {
                         Edit
                       </button>
                       {c.is_active && (
-                        <button onClick={() => handleDeleteCategory(c.id)} className="confirm-cancel-btn" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem' }}>
+                        <button onClick={() => triggerDeleteCategory(c.id)} className="confirm-cancel-btn" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem' }}>
                           Deactivate
                         </button>
                       )}
@@ -438,6 +461,19 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
 
+                <div className="form-group">
+                  <label className="form-label">Tag (e.g. Drink, Best Seller)</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={prodTag}
+                    onChange={(e) => setProdTag(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Sort Order</label>
                   <input
@@ -579,6 +615,16 @@ export default function AdminProductsPage() {
           </div>
         </div>
       )}
+      {/* CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.type === 'product' ? 'Deactivate Product' : 'Deactivate Category'}
+        message={`Are you sure you want to deactivate this ${confirmModal.type}? It will no longer be visible to customers on the public menu.`}
+        confirmText="Deactivate"
+        isDangerous={true}
+        onConfirm={executeDelete}
+        onCancel={() => setConfirmModal({ isOpen: false, type: null, targetId: null })}
+      />
     </div>
   );
 }

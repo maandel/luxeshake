@@ -11,7 +11,7 @@ class CategoryBase(BaseModel):
 
 
 class CategoryCreate(CategoryBase):
-    pass
+    is_active: bool = True
 
 
 class CategoryResponse(CategoryBase):
@@ -27,7 +27,7 @@ class ProductBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: str = Field(..., min_length=1, max_length=1000)
     category_id: uuid.UUID
-    tag: str = Field(..., min_length=1, max_length=50)
+    tag: str = Field("Drink", min_length=1, max_length=50)
     small_price: int = Field(..., ge=0, le=10000000)
     big_price: int = Field(..., ge=0, le=10000000)
     sort_order: int = Field(0, ge=0, le=1000)
@@ -36,7 +36,7 @@ class ProductBase(BaseModel):
 
 
 class ProductCreate(ProductBase):
-    pass
+    is_active: bool = True
 
 
 class ProductResponse(ProductBase):

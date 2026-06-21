@@ -89,7 +89,11 @@ async def admin_list_products(
     manager: Annotated[dict, Depends(require_manager_or_above)],
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Product).order_by(Product.sort_order))
+    result = await db.execute(
+        select(Product)
+        .options(selectinload(Product.category))
+        .order_by(Product.sort_order)
+    )
     return result.scalars().all()
 
 

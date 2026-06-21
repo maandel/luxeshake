@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../../lib/api';
 import { useAuthStore } from '../../../lib/store/authStore';
 import { useToast } from '../../../context/ToastContext';
+import ConfirmModal from '../../../components/admin/ConfirmModal';
 
 interface DeliveryArea {
   id: string;
@@ -28,6 +29,12 @@ export default function AdminDeliveryPage() {
   const [areaSortOrder, setAreaSortOrder] = useState(0);
   const [areaActive, setAreaActive] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Confirm Modal state
+  const [confirmModalState, setConfirmModalState] = useState<{
+    isOpen: boolean;
+    areaId: string | null;
+  }>({ isOpen: false, areaId: null });
 
   const fetchAreas = async () => {
     setLoading(true);
@@ -94,8 +101,14 @@ export default function AdminDeliveryPage() {
     }
   };
 
-  const handleDeleteArea = async (id: string) => {
-    if (!confirm('Are you sure you want to deactivate this delivery zone?')) return;
+  const triggerDeactivate = (id: string) => {
+    setConfirmModalState({ isOpen: true, areaId: id });
+  };
+
+  const handleDeleteAreaConfirm = async () => {
+    const id = confirmModalState.areaId;
+    if (!id) return;
+    setConfirmModalState({ isOpen: false, areaId: null });
     try {
       await api.delete(`/admin/delivery-areas/${id}`);
       showToast('Delivery zone deactivated.', 'info');
@@ -138,7 +151,6 @@ export default function AdminDeliveryPage() {
                 <tr style={{ borderBottom: '1px solid rgba(201, 150, 62, 0.2)', color: 'var(--gold-lt)' }}>
                   <th style={{ padding: '0.8rem 0.5rem' }}>Zone Name</th>
                   <th style={{ padding: '0.8rem 0.5rem' }}>Delivery Fee (₦)</th>
-                  <th style={{ padding: '0.8rem 0.5rem' }}>Sort order</th>
                   <th style={{ padding: '0.8rem 0.5rem' }}>Active status</th>
                   <th style={{ padding: '0.8rem 0.5rem' }}>Actions</th>
                 </tr>
@@ -148,7 +160,6 @@ export default function AdminDeliveryPage() {
                   <tr key={a.id} style={{ borderBottom: '1px solid rgba(201, 150, 62, 0.08)' }}>
                     <td style={{ padding: '0.8rem 0.5rem', fontWeight: 500 }}>{a.name}</td>
                     <td style={{ padding: '0.8rem 0.5rem', color: 'var(--gold-lt)' }}>₦{a.fee.toLocaleString()}</td>
-                    <td style={{ padding: '0.8rem 0.5rem' }}>{a.sort_order}</td>
                     <td style={{ padding: '0.8rem 0.5rem' }}>
                       <span style={{
                         padding: '0.15rem 0.5rem',
@@ -165,7 +176,7 @@ export default function AdminDeliveryPage() {
                         Edit
                       </button>
                       {a.is_active && (
-                        <button onClick={() => handleDeleteArea(a.id)} className="confirm-cancel-btn" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem' }}>
+                        <button onClick={() => triggerDeactivate(a.id)} className="confirm-cancel-btn" style={{ padding: '0.3rem 0.8rem', fontSize: '0.7rem' }}>
                           Deactivate
                         </button>
                       )}
@@ -198,26 +209,15 @@ export default function AdminDeliveryPage() {
                 />
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Delivery Fee (₦)</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={areaFee}
-                    onChange={(e) => setAreaFee(parseInt(e.target.value) || 0)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Sort Order</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={areaSortOrder}
-                    onChange={(e) => setAreaSortOrder(parseInt(e.target.value) || 0)}
-                  />
-                </div>
+              <div className="form-group" style={{ marginTop: '1.25rem' }}>
+                <label className="form-label">Delivery Fee (₦)</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={areaFee}
+                  onChange={(e) => setAreaFee(parseInt(e.target.value) || 0)}
+                  required
+                />
               </div>
 
               <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1rem' }}>
@@ -240,6 +240,16 @@ export default function AdminDeliveryPage() {
           </div>
         </div>
       )}
+      {/* CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={confirmModalState.isOpen}
+        title="Deactivate Zone"
+        message="Are you sure you want to deactivate this delivery zone? Customers will no longer be able to select it at checkout."
+        confirmText="Deactivate"
+        isDangerous={true}
+        onConfirm={handleDeleteAreaConfirm}
+        onCancel={() => setConfirmModalState({ isOpen: false, areaId: null })}
+      />
     </div>
   );
 }

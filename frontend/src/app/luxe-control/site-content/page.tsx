@@ -24,18 +24,33 @@ export default function SiteContentPage() {
     location_title: '',
     location_subtitle: '',
     complaints_title: '',
-    complaints_subtitle: ''
+    complaints_subtitle: '',
+    about_stat_1_value: 100,
+    about_stat_1_suffix: '%',
+    about_stat_1_label: 'Natural Dairy',
+    about_stat_2_value: 3,
+    about_stat_2_suffix: ' min',
+    about_stat_2_label: 'Per Batch',
+    about_stat_3_value: 6,
+    about_stat_3_suffix: '+',
+    about_stat_3_label: 'Collections'
   });
   
   const [images, setImages] = useState({
     hero_image_url: '',
     hero_image_path: '',
-    about_image_url: '',
-    about_image_path: ''
+    about_image_url_1: '',
+    about_image_path_1: '',
+    about_image_url_2: '',
+    about_image_path_2: '',
+    about_image_url_3: '',
+    about_image_path_3: ''
   });
 
   const heroFileInput = useRef<HTMLInputElement>(null);
-  const aboutFileInput = useRef<HTMLInputElement>(null);
+  const aboutFileInput1 = useRef<HTMLInputElement>(null);
+  const aboutFileInput2 = useRef<HTMLInputElement>(null);
+  const aboutFileInput3 = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchContent();
@@ -54,13 +69,26 @@ export default function SiteContentPage() {
         location_title: data.location_title,
         location_subtitle: data.location_subtitle,
         complaints_title: data.complaints_title,
-        complaints_subtitle: data.complaints_subtitle
+        complaints_subtitle: data.complaints_subtitle,
+        about_stat_1_value: data.about_stat_1_value,
+        about_stat_1_suffix: data.about_stat_1_suffix,
+        about_stat_1_label: data.about_stat_1_label,
+        about_stat_2_value: data.about_stat_2_value,
+        about_stat_2_suffix: data.about_stat_2_suffix,
+        about_stat_2_label: data.about_stat_2_label,
+        about_stat_3_value: data.about_stat_3_value,
+        about_stat_3_suffix: data.about_stat_3_suffix,
+        about_stat_3_label: data.about_stat_3_label
       });
       setImages({
         hero_image_url: data.hero_image_url,
         hero_image_path: data.hero_image_path,
-        about_image_url: data.about_image_url,
-        about_image_path: data.about_image_path
+        about_image_url_1: data.about_image_url_1,
+        about_image_path_1: data.about_image_path_1,
+        about_image_url_2: data.about_image_url_2,
+        about_image_path_2: data.about_image_path_2,
+        about_image_url_3: data.about_image_url_3,
+        about_image_path_3: data.about_image_path_3
       });
     } catch (err) {
       showToast('Failed to load site content', 'error');
@@ -86,7 +114,7 @@ export default function SiteContentPage() {
     }
   };
 
-  const handleImageUpload = async (section: 'hero' | 'about', file: File) => {
+  const handleImageUpload = async (section: 'hero' | 'about_1' | 'about_2' | 'about_3', file: File) => {
     if (file.size > 5 * 1024 * 1024) {
       showToast('Image must be less than 5MB', 'error');
       return;
@@ -105,9 +133,14 @@ export default function SiteContentPage() {
     }
   };
 
-  const renderImagePreview = (section: 'hero' | 'about') => {
-    const url = section === 'hero' ? images.hero_image_url : images.about_image_url;
-    const path = section === 'hero' ? images.hero_image_path : images.about_image_path;
+  const renderImagePreview = (section: 'hero' | 'about_1' | 'about_2' | 'about_3') => {
+    let url = '';
+    let path = '';
+    if (section === 'hero') { url = images.hero_image_url; path = images.hero_image_path; }
+    else if (section === 'about_1') { url = images.about_image_url_1; path = images.about_image_path_1; }
+    else if (section === 'about_2') { url = images.about_image_url_2; path = images.about_image_path_2; }
+    else if (section === 'about_3') { url = images.about_image_url_3; path = images.about_image_path_3; }
+    
     const src = path ? `${BACKEND}${path}` : url;
     
     return src ? (
@@ -238,7 +271,7 @@ export default function SiteContentPage() {
       {/* Hero Section */}
       <div className="section-card">
         <h2><span className="material-symbols-outlined">image</span> Hero Section</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
           <div>
             <div className="form-group">
               <label>Hero Title</label>
@@ -272,7 +305,7 @@ export default function SiteContentPage() {
       {/* About Section */}
       <div className="section-card">
         <h2><span className="material-symbols-outlined">menu_book</span> About Section</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
           <div>
             <div className="form-group">
               <label>About Title</label>
@@ -282,23 +315,70 @@ export default function SiteContentPage() {
               <label>About Content</label>
               <textarea name="about_content" value={formData.about_content} onChange={handleChange} style={{ minHeight: '150px' }} />
             </div>
+
+            {/* Stats Editor */}
+            <div style={{ marginTop: '2rem', padding: '1rem', background: 'rgba(13,8,4,0.5)', borderRadius: '12px', border: '1px solid rgba(212,175,55,0.1)' }}>
+              <h3 style={{ fontSize: '0.9rem', color: '#f2ca50', margin: '0 0 1rem 0' }}>About Statistics</h3>
+              {[1, 2, 3].map(num => (
+                <div key={num} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '1rem', marginBottom: num !== 3 ? '1rem' : 0 }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '0.65rem' }}>Stat {num} Value (Number)</label>
+                    <input 
+                      type="number" 
+                      name={`about_stat_${num}_value`} 
+                      value={(formData as any)[`about_stat_${num}_value`]} 
+                      onChange={handleChange} 
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '0.65rem' }}>Stat {num} Suffix</label>
+                    <input 
+                      name={`about_stat_${num}_suffix`} 
+                      value={(formData as any)[`about_stat_${num}_suffix`]} 
+                      onChange={handleChange} 
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label style={{ fontSize: '0.65rem' }}>Stat {num} Label</label>
+                    <input 
+                      name={`about_stat_${num}_label`} 
+                      value={(formData as any)[`about_stat_${num}_label`]} 
+                      onChange={handleChange} 
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
           </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#99907c', marginBottom: '0.5rem' }}>About Image (Rec: 800x1000)</label>
-            {renderImagePreview('about')}
-            <input 
-              type="file" 
-              accept="image/jpeg, image/png, image/webp" 
-              ref={aboutFileInput} 
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) handleImageUpload('about', e.target.files[0]);
-              }}
-            />
-            <button className="upload-btn" onClick={() => aboutFileInput.current?.click()}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>upload</span>
-              Upload New About Image
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#99907c', marginBottom: '0.5rem' }}>About Image 1 (The Recipe)</label>
+              {renderImagePreview('about_1')}
+              <input type="file" accept="image/jpeg, image/png, image/webp" ref={aboutFileInput1} style={{ display: 'none' }}
+                onChange={(e) => { if (e.target.files && e.target.files[0]) handleImageUpload('about_1', e.target.files[0]); }} />
+              <button className="upload-btn" onClick={() => aboutFileInput1.current?.click()}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>upload</span> Upload Image 1
+              </button>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#99907c', marginBottom: '0.5rem' }}>About Image 2 (Ingredients)</label>
+              {renderImagePreview('about_2')}
+              <input type="file" accept="image/jpeg, image/png, image/webp" ref={aboutFileInput2} style={{ display: 'none' }}
+                onChange={(e) => { if (e.target.files && e.target.files[0]) handleImageUpload('about_2', e.target.files[0]); }} />
+              <button className="upload-btn" onClick={() => aboutFileInput2.current?.click()}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>upload</span> Upload Image 2
+              </button>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#99907c', marginBottom: '0.5rem' }}>About Image 3 (The Pour)</label>
+              {renderImagePreview('about_3')}
+              <input type="file" accept="image/jpeg, image/png, image/webp" ref={aboutFileInput3} style={{ display: 'none' }}
+                onChange={(e) => { if (e.target.files && e.target.files[0]) handleImageUpload('about_3', e.target.files[0]); }} />
+              <button className="upload-btn" onClick={() => aboutFileInput3.current?.click()}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>upload</span> Upload Image 3
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -64,8 +64,8 @@ async def upload_site_image(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db)
 ):
-    if section not in ["hero", "about"]:
-        raise HTTPException(status_code=400, detail="Invalid section. Must be 'hero' or 'about'")
+    if section not in ["hero", "about_1", "about_2", "about_3"]:
+        raise HTTPException(status_code=400, detail="Invalid section. Must be 'hero' or 'about_1', 'about_2', 'about_3'")
 
     result = await db.execute(select(SiteContent))
     site_content = result.scalars().first()
@@ -130,9 +130,15 @@ async def upload_site_image(
                 if section == "hero":
                     site_content.hero_image_url = secure_url
                     site_content.hero_image_path = None
-                else:
-                    site_content.about_image_url = secure_url
-                    site_content.about_image_path = None
+                elif section == "about_1":
+                    site_content.about_image_url_1 = secure_url
+                    site_content.about_image_path_1 = None
+                elif section == "about_2":
+                    site_content.about_image_url_2 = secure_url
+                    site_content.about_image_path_2 = None
+                elif section == "about_3":
+                    site_content.about_image_url_3 = secure_url
+                    site_content.about_image_path_3 = None
                     
                 await db.commit()
                 return {
@@ -153,10 +159,18 @@ async def upload_site_image(
             site_content.hero_image_path = f"/static/uploads/site_content/{filename}"
             site_content.hero_image_url = None
             ret_path = site_content.hero_image_path
-        else:
-            site_content.about_image_path = f"/static/uploads/site_content/{filename}"
-            site_content.about_image_url = None
-            ret_path = site_content.about_image_path
+        elif section == "about_1":
+            site_content.about_image_path_1 = f"/static/uploads/site_content/{filename}"
+            site_content.about_image_url_1 = None
+            ret_path = site_content.about_image_path_1
+        elif section == "about_2":
+            site_content.about_image_path_2 = f"/static/uploads/site_content/{filename}"
+            site_content.about_image_url_2 = None
+            ret_path = site_content.about_image_path_2
+        elif section == "about_3":
+            site_content.about_image_path_3 = f"/static/uploads/site_content/{filename}"
+            site_content.about_image_url_3 = None
+            ret_path = site_content.about_image_path_3
 
         await db.commit()
 

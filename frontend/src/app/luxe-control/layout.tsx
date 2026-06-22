@@ -180,6 +180,8 @@ export default function LuxeControlLayout({
           padding: 0;
           position: relative;
           overflow: hidden;
+          transition: transform 0.3s ease;
+          z-index: 100;
         }
 
         /* Subtle top-to-bottom gradient on sidebar */
@@ -482,6 +484,63 @@ export default function LuxeControlLayout({
           letter-spacing: 0.02em;
         }
 
+        .order-modal-close {
+          position: absolute;
+          top: 1rem;
+          right: 1.5rem;
+          background: none;
+          border: none;
+          color: #99907c;
+          cursor: pointer;
+          font-size: 1.5rem;
+        }
+        .order-modal-close:hover {
+          color: #eae1d4;
+        }
+
+        /* ── Mobile Responsiveness ── */
+        .lc-hamburger {
+          display: none;
+          background: none;
+          border: none;
+          color: #f2ca50;
+          cursor: pointer;
+          font-size: 24px;
+          padding: 0;
+        }
+
+        .lc-sidebar-overlay {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 90;
+          backdrop-filter: blur(4px);
+        }
+
+        @media (max-width: 768px) {
+          .lc-sidebar {
+            position: absolute;
+            height: 100%;
+            transform: translateX(-100%);
+          }
+          .lc-sidebar.open {
+            transform: translateX(0);
+          }
+          .lc-hamburger {
+            display: block;
+          }
+          .lc-sidebar-overlay.open {
+            display: block;
+          }
+          .lc-topbar {
+            padding: 0 1rem;
+          }
+          .lc-content {
+            padding: 1.5rem 1rem;
+          }
+        }
+
         .cart-close {
           background: transparent;
           border: none;
@@ -641,8 +700,9 @@ export default function LuxeControlLayout({
       `}</style>
 
       <div className="lc-layout">
+        <div className={`lc-sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={() => setSidebarOpen(false)} />
         {/* ── Sidebar ── */}
-        <aside className="lc-sidebar">
+        <aside className={`lc-sidebar ${sidebarOpen ? 'open' : ''}`}>
           <div className="lc-sidebar-head">
             <Link href="/luxe-control/dashboard" className="lc-sidebar-wordmark">
               LuxeControl
@@ -659,6 +719,7 @@ export default function LuxeControlLayout({
                   key={item.path}
                   href={item.path}
                   className={`lc-nav-item${isActive ? ' active' : ''}`}
+                  onClick={() => setSidebarOpen(false)}
                 >
                   <span className="lc-nav-icon">{NAV_ICONS[item.path] || 'chevron_right'}</span>
                   {item.label}
@@ -675,6 +736,9 @@ export default function LuxeControlLayout({
         {/* ── Main panel ── */}
         <main className="lc-main">
           <div className="lc-topbar">
+            <button className="lc-hamburger" onClick={() => setSidebarOpen(true)}>
+              <span className="material-symbols-outlined">menu</span>
+            </button>
             <div className="lc-topbar-breadcrumb">
               <span style={{ color: '#4d4635' }}>LuxeControl</span>
               <span style={{ color: '#4d4635' }}>/</span>

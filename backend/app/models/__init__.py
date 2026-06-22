@@ -5,6 +5,7 @@ from app.models.delivery_area import DeliveryArea
 from app.models.order import Order, OrderItem
 from app.models.transaction import Transaction
 from app.models.complaint import Complaint, TicketMessage
+from app.models.site_content import SiteContent
 
 __all__ = [
     "Base",
@@ -17,4 +18,5 @@ __all__ = [
     "Transaction",
     "Complaint",
     "TicketMessage",
+    "SiteContent",
 ]

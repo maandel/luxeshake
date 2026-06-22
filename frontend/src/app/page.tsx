@@ -46,14 +46,27 @@ export interface SiteContentData {
   hero_image_path?: string;
   about_title: string;
   about_content: string;
-  about_image_url?: string;
-  about_image_path?: string;
+  about_image_url_1?: string;
+  about_image_path_1?: string;
+  about_image_url_2?: string;
+  about_image_path_2?: string;
+  about_image_url_3?: string;
+  about_image_path_3?: string;
   menu_title: string;
   menu_subtitle: string;
   location_title: string;
   location_subtitle: string;
   complaints_title: string;
   complaints_subtitle: string;
+  about_stat_1_value?: number;
+  about_stat_1_suffix?: string;
+  about_stat_1_label?: string;
+  about_stat_2_value?: number;
+  about_stat_2_suffix?: string;
+  about_stat_2_label?: string;
+  about_stat_3_value?: number;
+  about_stat_3_suffix?: string;
+  about_stat_3_label?: string;
 }
 
 function ProductCard({ product }: { product: Product }) {
@@ -666,7 +679,7 @@ function AboutSection({ content }: { content: SiteContentData | null }) {
               style={{ width: '100%', height: '100%', background: '#fdfbf7', padding: '12px', paddingBottom: '45px', borderRadius: '4px', boxShadow: '0 30px 60px rgba(0,0,0,0.8)' }}
               whileHover={{ scale: 1.08, rotate: 0, zIndex: 20 }}
             >
-              <img src={content?.about_image_path ? `${BACKEND}${content.about_image_path}` : (content?.about_image_url || "https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=800")} alt="Craftsmanship" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={content?.about_image_path_1 ? `${BACKEND}${content.about_image_path_1}` : (content?.about_image_url_1 || "https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=800")} alt="Craftsmanship" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <div style={{ position: 'absolute', bottom: '12px', left: '0', width: '100%', textAlign: 'center', fontFamily: "'Libre Caslon Text', serif", fontSize: '0.8rem', color: '#1A0F0A' }}>The Recipe</div>
             </motion.div>
           </motion.div>
@@ -681,7 +694,7 @@ function AboutSection({ content }: { content: SiteContentData | null }) {
               style={{ width: '100%', height: '100%', background: '#fdfbf7', padding: '10px', paddingBottom: '35px', borderRadius: '4px', boxShadow: '0 25px 50px rgba(0,0,0,0.7)', filter: 'brightness(0.9)' }}
               whileHover={{ scale: 1.08, rotate: 0, zIndex: 20, filter: 'brightness(1)' }}
             >
-              <img src="https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=800" alt="Ingredients" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={content?.about_image_path_2 ? `${BACKEND}${content.about_image_path_2}` : (content?.about_image_url_2 || "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=800")} alt="Ingredients" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </motion.div>
           </motion.div>
 
@@ -695,7 +708,7 @@ function AboutSection({ content }: { content: SiteContentData | null }) {
               style={{ width: '100%', height: '100%', background: '#fdfbf7', padding: '12px', paddingBottom: '40px', borderRadius: '4px', boxShadow: '0 35px 70px rgba(0,0,0,0.9)' }}
               whileHover={{ scale: 1.08, rotate: 0, zIndex: 20 }}
             >
-              <img src="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=800" alt="Process" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={content?.about_image_path_3 ? `${BACKEND}${content.about_image_path_3}` : (content?.about_image_url_3 || "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=800")} alt="Details" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <div style={{ position: 'absolute', bottom: '12px', left: '0', width: '100%', textAlign: 'center', fontFamily: "'Libre Caslon Text', serif", fontSize: '0.8rem', color: '#1A0F0A' }}>The Pour</div>
             </motion.div>
           </motion.div>
@@ -717,9 +730,9 @@ function AboutSection({ content }: { content: SiteContentData | null }) {
             {content?.about_content || 'We believe indulgence should be an experience of absolute refinement. Our milkshakes are not simply blended — they are orchestrated from the finest single-origin cacao and cream sourced from heirloom-breed cows.\n\nEvery signature pour is a testament to our commitment to artisanal quality. Small-batch production ensures every drop maintains the velvety texture that defines the LuxeShake legacy.'}
           </div>
           <div style={{ display: 'flex', gap: '3rem', paddingTop: '1.5rem', flexWrap: 'wrap' }}>
-            <AnimatedStat value={100} suffix="%" label="Natural Dairy" />
-            <AnimatedStat value={3} suffix=" min" label="Per Batch" />
-            <AnimatedStat value={6} suffix="+" label="Collections" />
+            <AnimatedStat value={content?.about_stat_1_value ?? 100} suffix={content?.about_stat_1_suffix || "%"} label={content?.about_stat_1_label || "Natural Dairy"} />
+            <AnimatedStat value={content?.about_stat_2_value ?? 3} suffix={content?.about_stat_2_suffix || " min"} label={content?.about_stat_2_label || "Per Batch"} />
+            <AnimatedStat value={content?.about_stat_3_value ?? 6} suffix={content?.about_stat_3_suffix || "+"} label={content?.about_stat_3_label || "Collections"} />
           </div>
         </motion.div>
       </div>

@@ -34,14 +34,27 @@ interface Product {
 
 const BACKEND = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
 
-const MOCK: Product[] = [
-  { id: '1', name: 'Classic Chocolate', description: 'Rich, velvety chocolate topped with fresh whipped cream and chocolate shavings.', category: 'Signature Shakes', tag: 'Signature', small_price: 2000, big_price: 3000, image_url: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=600' },
-  { id: '2', name: 'Strawberry Dream', description: 'Sweet, ripe strawberries blended with fresh milk and premium vanilla ice cream.', category: 'Signature Shakes', tag: 'Classic', small_price: 2000, big_price: 3000, image_url: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=600' },
-  { id: '3', name: 'Banana Cream', description: 'Creamy banana shake blended with rich vanilla ice cream and a touch of honey.', category: 'Seasonal Pairings', tag: 'Seasonal', small_price: 2000, big_price: 3000, image_url: 'https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=600' },
-  { id: '4', name: 'Vanilla Classic', description: 'Smooth, timeless vanilla shake made from authentic Madagascar vanilla beans.', category: 'Signature Shakes', tag: 'Classic', small_price: 2000, big_price: 3000, image_url: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=600' },
-  { id: '5', name: 'Mixed Fruit Smoothie', description: 'A healthy blend of strawberries, blueberries, bananas, and yogurt.', category: 'Apothecary', tag: 'Wellness', small_price: 2000, big_price: 3000, image_url: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=600' },
-  { id: '6', name: 'Beetroot Elixir', description: 'Organic beetroot with fresh ginger, lemon, and apples for a daily detox.', category: 'Apothecary', tag: 'Detox', small_price: 2000, big_price: 3000, image_url: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=600' },
+const MOCK = [
+  { id: '1', name: 'Golden Velvet Cacao', description: 'Single-origin dark chocolate, 24k gold leaf, Tahitian vanilla bean cream.', small_price: 15000, big_price: 22000, category: 'Signature', tag: 'Bestseller' },
+  { id: '2', name: 'The Truffle Strawberry', description: 'Wild strawberries infused with white truffle essence, topped with spun sugar.', small_price: 18000, big_price: 26000, category: 'Signature', tag: 'New' },
 ];
+
+export interface SiteContentData {
+  hero_title: string;
+  hero_subtitle: string;
+  hero_image_url?: string;
+  hero_image_path?: string;
+  about_title: string;
+  about_content: string;
+  about_image_url?: string;
+  about_image_path?: string;
+  menu_title: string;
+  menu_subtitle: string;
+  location_title: string;
+  location_subtitle: string;
+  complaints_title: string;
+  complaints_subtitle: string;
+}
 
 function ProductCard({ product }: { product: Product }) {
   const [size, setSize] = useState<'small' | 'big'>('small');
@@ -137,7 +150,7 @@ function ProductCard({ product }: { product: Product }) {
   );
 }
 
-function CatalogSection({ onOpenCart }: { onOpenCart: () => void }) {
+function CatalogSection({ onOpenCart, content }: { onOpenCart: () => void, content: SiteContentData | null }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
@@ -168,11 +181,9 @@ function CatalogSection({ onOpenCart }: { onOpenCart: () => void }) {
           <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#d4af37' }}>
             Artisanal Catalog
           </div>
-          <h2 style={{ fontFamily: "'Libre Caslon Text', serif", fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 400, color: '#eae1d4', margin: 0, lineHeight: 1.15 }}>
-            The <em style={{ color: '#f2ca50', fontStyle: 'italic' }}>Menu</em>
-          </h2>
+          <h2 style={{ fontFamily: "'Libre Caslon Text', serif", fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 400, color: '#eae1d4', margin: 0, lineHeight: 1.15 }} dangerouslySetInnerHTML={{ __html: content?.menu_title || 'The <em style="color: #f2ca50; font-style: italic;">Menu</em>' }} />
           <p style={{ fontSize: '0.95rem', color: '#99907c', maxWidth: '480px', lineHeight: 1.7, margin: 0 }}>
-            Curated collections of our finest offerings. Select your size and add directly to your order.
+            {content?.menu_subtitle || 'Curated collections of our finest offerings. Select your size and add directly to your order.'}
           </p>
         </div>
 
@@ -517,7 +528,7 @@ function SpaNavbar({ onOpenCart, cartCount }: { onOpenCart: () => void; cartCoun
   );
 }
 
-function HeroSection({ onScrollToMenu }: { onScrollToMenu: () => void }) {
+function HeroSection({ onScrollToMenu, content }: { onScrollToMenu: () => void, content: SiteContentData | null }) {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -536,7 +547,7 @@ function HeroSection({ onScrollToMenu }: { onScrollToMenu: () => void }) {
       {/* Background Image */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 0, backgroundColor: '#000' }}>
         <img
-          src="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=1800&auto=format&fit=crop"
+          src={content?.hero_image_path ? `${BACKEND}${content.hero_image_path}` : (content?.hero_image_url || "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=1800&auto=format&fit=crop")}
           alt="LuxeShake Hero"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: '75% center', position: 'absolute', inset: 0, pointerEvents: 'none' }}
         />
@@ -547,12 +558,10 @@ function HeroSection({ onScrollToMenu }: { onScrollToMenu: () => void }) {
       <div style={{ position: 'relative', zIndex: 2, maxWidth: '1200px', margin: '0 auto', padding: '6rem max(5vw, 1.5rem) 4rem', width: '100%' }}>
         <motion.div style={{ maxWidth: '650px' }} variants={containerVariants} initial="hidden" animate="visible">
 
-          <motion.h1 variants={itemVariants} style={{ fontFamily: "'Libre Caslon Text', serif", fontSize: 'clamp(3rem, 7vw, 5.5rem)', fontWeight: 400, color: '#eae1d4', lineHeight: 1.05, marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
-            Luxury in <em style={{ background: 'linear-gradient(to right, #f2ca50, #d4af37)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic', paddingRight: '0.1em' }}>Every</em><br />Sip &amp; Bite.
-          </motion.h1>
+          <motion.h1 variants={itemVariants} style={{ fontFamily: "'Libre Caslon Text', serif", fontSize: 'clamp(3rem, 7vw, 5.5rem)', fontWeight: 400, color: '#eae1d4', lineHeight: 1.05, marginBottom: '1.5rem', letterSpacing: '-0.02em' }} dangerouslySetInnerHTML={{ __html: content?.hero_title || 'Luxury in <em style="background: linear-gradient(to right, #f2ca50, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-style: italic; padding-right: 0.1em;">Every</em><br />Sip &amp; Bite.' }} />
 
           <motion.p variants={itemVariants} style={{ fontSize: 'clamp(1rem, 1.5vw, 1.15rem)', color: 'rgba(234,225,212,0.8)', lineHeight: 1.8, marginBottom: '3rem', fontFamily: "'DM Sans', sans-serif", maxWidth: '500px', fontWeight: 300 }}>
-            Hand-crafted with organic dairy, rare ingredients, and gourmet snacks.
+            {content?.hero_subtitle || 'Hand-crafted with organic dairy, rare ingredients, and gourmet snacks.'}
           </motion.p>
 
           <motion.div variants={itemVariants} style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
@@ -630,7 +639,7 @@ function AnimatedStat({ value, suffix, label }: { value: number, suffix: string,
   );
 }
 
-function AboutSection() {
+function AboutSection({ content }: { content: SiteContentData | null }) {
   return (
     <section id="about" style={{ padding: '8rem 0', background: '#1A0F0A', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: '-100px', right: '-100px', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(212,175,55,0.06) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
@@ -657,7 +666,7 @@ function AboutSection() {
               style={{ width: '100%', height: '100%', background: '#fdfbf7', padding: '12px', paddingBottom: '45px', borderRadius: '4px', boxShadow: '0 30px 60px rgba(0,0,0,0.8)' }}
               whileHover={{ scale: 1.08, rotate: 0, zIndex: 20 }}
             >
-              <img src="https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=800" alt="Craftsmanship" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={content?.about_image_path ? `${BACKEND}${content.about_image_path}` : (content?.about_image_url || "https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=800")} alt="Craftsmanship" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <div style={{ position: 'absolute', bottom: '12px', left: '0', width: '100%', textAlign: 'center', fontFamily: "'Libre Caslon Text', serif", fontSize: '0.8rem', color: '#1A0F0A' }}>The Recipe</div>
             </motion.div>
           </motion.div>
@@ -702,16 +711,11 @@ function AboutSection() {
           <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#d4af37', fontFamily: "'DM Sans', sans-serif" }}>
             Our Craft
           </div>
-          <h2 style={{ fontFamily: "'Libre Caslon Text', serif", fontSize: 'clamp(2rem, 3vw, 2.8rem)', fontWeight: 400, color: '#eae1d4', margin: 0, lineHeight: 1.1 }}>
-            The Art of <em style={{ background: 'linear-gradient(to right, #f2ca50, #d4af37)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontStyle: 'italic', paddingRight: '0.1em' }}>the Shake</em>
-          </h2>
+          <h2 style={{ fontFamily: "'Libre Caslon Text', serif", fontSize: 'clamp(2rem, 3vw, 2.8rem)', fontWeight: 400, color: '#eae1d4', margin: 0, lineHeight: 1.1 }} dangerouslySetInnerHTML={{ __html: content?.about_title || 'The Art of <em style="background: linear-gradient(to right, #f2ca50, #d4af37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-style: italic; padding-right: 0.1em;">the Shake</em>' }} />
           <div style={{ width: '36px', height: '2px', background: 'linear-gradient(90deg, #d4af37, transparent)' }} />
-          <p style={{ fontSize: '1rem', color: 'rgba(234,225,212,0.8)', lineHeight: 1.8, margin: 0, fontFamily: "'DM Sans', sans-serif", fontWeight: 300 }}>
-            We believe indulgence should be an experience of absolute refinement. Our milkshakes are not simply blended — they are orchestrated from the finest single-origin cacao and cream sourced from heirloom-breed cows.
-          </p>
-          <p style={{ fontSize: '1rem', color: 'rgba(234,225,212,0.8)', lineHeight: 1.8, margin: 0, fontFamily: "'DM Sans', sans-serif", fontWeight: 300 }}>
-            Every signature pour is a testament to our commitment to artisanal quality. Small-batch production ensures every drop maintains the velvety texture that defines the LuxeShake legacy.
-          </p>
+          <div style={{ fontSize: '1rem', color: 'rgba(234,225,212,0.8)', lineHeight: 1.8, margin: 0, fontFamily: "'DM Sans', sans-serif", fontWeight: 300, whiteSpace: 'pre-wrap' }}>
+            {content?.about_content || 'We believe indulgence should be an experience of absolute refinement. Our milkshakes are not simply blended — they are orchestrated from the finest single-origin cacao and cream sourced from heirloom-breed cows.\n\nEvery signature pour is a testament to our commitment to artisanal quality. Small-batch production ensures every drop maintains the velvety texture that defines the LuxeShake legacy.'}
+          </div>
           <div style={{ display: 'flex', gap: '3rem', paddingTop: '1.5rem', flexWrap: 'wrap' }}>
             <AnimatedStat value={100} suffix="%" label="Natural Dairy" />
             <AnimatedStat value={3} suffix=" min" label="Per Batch" />
@@ -723,7 +727,7 @@ function AboutSection() {
   );
 }
 
-function LocationsSection() {
+function LocationsSection({ content }: { content: SiteContentData | null }) {
   const [address, setAddress] = useState('New Haven, Enugu');
   const [deliveryZones, setDeliveryZones] = useState('New Haven · GRA · Trans-Ekulu · Independence Layout');
 
@@ -754,9 +758,9 @@ function LocationsSection() {
     <section id="locations" style={{ padding: '7rem 0', background: '#160c08', borderTop: '1px solid rgba(212,175,55,0.08)' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 max(5vw, 1.5rem)', textAlign: 'center' }}>
         <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#d4af37', marginBottom: '1rem', fontFamily: "'DM Sans', sans-serif" }}>Find Us</div>
-        <h2 style={{ fontFamily: "'Libre Caslon Text', serif", fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 400, color: '#eae1d4', marginBottom: '1rem' }}>Our Locations</h2>
+        <h2 style={{ fontFamily: "'Libre Caslon Text', serif", fontSize: 'clamp(1.8rem, 3vw, 2.5rem)', fontWeight: 400, color: '#eae1d4', marginBottom: '1rem' }} dangerouslySetInnerHTML={{ __html: content?.location_title || 'Our Locations' }} />
         <p style={{ fontSize: '0.9rem', color: '#99907c', maxWidth: '400px', margin: '0 auto 3.5rem', lineHeight: 1.7, fontFamily: "'DM Sans', sans-serif" }}>
-          Visit us in person or order for delivery within Enugu, Nigeria.
+          {content?.location_subtitle || 'Visit us in person or order for delivery within Enugu, Nigeria.'}
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', maxWidth: '800px', margin: '0 auto' }}>
           {[
@@ -834,9 +838,14 @@ function SpaFooter({ onScrollToMenu }: { onScrollToMenu: () => void }) {
 
 export default function HomePage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [siteContent, setSiteContent] = useState<SiteContentData | null>(null);
   const router = useRouter();
   const cartItems = useCartStore(s => s.items);
   const cartCount = cartItems.reduce((sum, i) => sum + i.qty, 0);
+
+  useEffect(() => {
+    api.get('/site-content').then(r => setSiteContent(r.data)).catch(() => {});
+  }, []);
 
   const scrollToMenu = () => document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth' });
 
@@ -848,11 +857,11 @@ export default function HomePage() {
   return (
     <div style={{ background: '#1A0F0A', minHeight: '100vh', color: '#eae1d4' }}>
       <SpaNavbar onOpenCart={() => setIsCartOpen(true)} cartCount={cartCount} />
-      <HeroSection onScrollToMenu={scrollToMenu} />
-      <AboutSection />
-      <CatalogSection onOpenCart={() => setIsCartOpen(true)} />
-      <LocationsSection />
-      <ContactSection />
+      <HeroSection onScrollToMenu={scrollToMenu} content={siteContent} />
+      <AboutSection content={siteContent} />
+      <CatalogSection onOpenCart={() => setIsCartOpen(true)} content={siteContent} />
+      <LocationsSection content={siteContent} />
+      <ContactSection title={siteContent?.complaints_title} subtitle={siteContent?.complaints_subtitle} />
       <SpaFooter onScrollToMenu={scrollToMenu} />
 
       <CartFAB onClick={() => setIsCartOpen(true)} />

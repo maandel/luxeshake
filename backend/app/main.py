@@ -11,6 +11,7 @@ from app.routers import (
     delivery_areas,
     orders,
     products,
+    site_content,
     transactions,
     users,
 )
@@ -68,6 +69,7 @@ app.include_router(orders.router, prefix=api_version)
 app.include_router(complaints.router, prefix=api_version)
 app.include_router(transactions.router, prefix=api_version)
 app.include_router(admin.router, prefix=api_version)
+app.include_router(site_content.router, prefix=api_version)
 
 
 @app.get("/")

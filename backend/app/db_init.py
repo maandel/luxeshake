@@ -2,6 +2,7 @@ from app.database import Base, engine
 from app.models.delivery_area import DeliveryArea
 from app.models.product import Category, Product
 from app.models.user import User
+from app.models.site_content import SiteContent
 from app.utils.security import get_password_hash
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -176,5 +177,24 @@ async def seed_db(db: AsyncSession):
         ]
         for d in default_delivery:
             db.add(d)
+
+    result = await db.execute(select(SiteContent))
+    site_content = result.scalars().first()
+    if not site_content:
+        default_content = SiteContent(
+            hero_title="Luxury in Every Sip & Bite.",
+            hero_subtitle="Hand-crafted with organic dairy, rare ingredients, and gourmet snacks.",
+            hero_image_url="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=1800&auto=format&fit=crop",
+            about_title="Crafted for the Connoisseur",
+            about_content="Every shake and snack we serve is a testament to our dedication to quality. We source the finest vanilla beans, the most decadent chocolates, and the freshest organic dairy to create an experience that transcends the ordinary.\n\nWhether you're treating yourself after a long day or celebrating a special moment, LuxeShake promises a taste of pure elegance.",
+            about_image_url="https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=800",
+            menu_title="The Menu",
+            menu_subtitle="Curated collections of our finest offerings. Select your size and add directly to your order.",
+            location_title="Our Sanctuaries",
+            location_subtitle="Experience LuxeShake in person. Select a location to view operating hours and precise directions.",
+            complaints_title="Concierge & Support",
+            complaints_subtitle="Our dedicated team is here to ensure your LuxeShake experience is nothing short of perfect."
+        )
+        db.add(default_content)
 
     await db.commit()

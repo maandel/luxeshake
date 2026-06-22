@@ -16,6 +16,7 @@ const NAV_ICONS: Record<string, string> = {
   '/luxe-control/tickets': 'support_agent',
   '/luxe-control/users': 'manage_accounts',
   '/luxe-control/settings': 'settings',
+  '/luxe-control/site-content': 'web',
 };
 
 export default function LuxeControlLayout({
@@ -146,6 +147,7 @@ export default function LuxeControlLayout({
   if (role === 'superadmin') {
     menuItems.push({ label: 'Staff Management', path: '/luxe-control/users' });
     menuItems.push({ label: 'Store Settings', path: '/luxe-control/settings' });
+    menuItems.push({ label: 'Site Content', path: '/luxe-control/site-content' });
   }
 
   const roleLabel: Record<string, string> = {

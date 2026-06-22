@@ -5,7 +5,15 @@ import Link from 'next/link';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 
-export const ContactSection: React.FC = () => {
+interface ContactSectionProps {
+  title?: string;
+  subtitle?: string;
+}
+
+export const ContactSection: React.FC<ContactSectionProps> = ({ 
+  title = "Have a <em>Complaint</em>?", 
+  subtitle = "Submit your feedback or complaint regarding quality, delivery, or payments. Our team will review and reply within 24 hours."
+}) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -395,10 +403,10 @@ export const ContactSection: React.FC = () => {
           {/* Header */}
           <div className="contact-header">
             <span className="contact-s-label">Support Center</span>
-            <h2 className="contact-s-title">Have a <em>Complaint</em>?</h2>
+            <h2 className="contact-s-title" dangerouslySetInnerHTML={{ __html: title }}></h2>
             <div className="contact-divider" />
             <p className="contact-s-body">
-              Submit your feedback or complaint regarding quality, delivery, or payments. Our team will review and reply within 24 hours.
+              {subtitle}
             </p>
           </div>
 

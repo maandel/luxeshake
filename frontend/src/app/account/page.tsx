@@ -1783,11 +1783,10 @@ export default function AccountPage() {
               </div>
             </div>
           </div>
-          </div>
         )}
 
-      <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem' }} />
-    </div >
+      <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem', paddingBottom: '1rem', zIndex: 10 }} />
+    </div>
     </>
   );
 }

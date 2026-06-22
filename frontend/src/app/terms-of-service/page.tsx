@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import GlobalFooter from '../components/GlobalFooter';
+import GlobalFooter from '../../components/GlobalFooter';
 
 const SECTION_STYLES = {
   background: 'rgba(36,22,17,0.55)',

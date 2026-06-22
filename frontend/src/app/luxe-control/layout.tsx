@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '../../lib/store/authStore';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../lib/api';
+import GlobalFooter from '../../components/GlobalFooter';
 
 const NAV_ICONS: Record<string, string> = {
   '/luxe-control/dashboard': 'dashboard',
@@ -725,7 +726,10 @@ export default function LuxeControlLayout({
           </div>
 
           <div className="lc-content">
-            {children}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              {children}
+            </div>
+            <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem' }} />
           </div>
         </main>
       </div>

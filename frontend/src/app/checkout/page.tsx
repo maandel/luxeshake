@@ -8,6 +8,7 @@ import { useCartStore } from '../../lib/store/cartStore';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 import { useAuthStore } from '../../lib/store/authStore';
+import GlobalFooter from '../../components/GlobalFooter';
 
 interface DeliveryArea {
   id: string;
@@ -1062,6 +1063,8 @@ export default function CheckoutPage() {
             </>
           )}
         </main>
+        
+        <GlobalFooter style={{ marginTop: 'auto', paddingTop: '3rem', paddingBottom: '1rem', zIndex: 10 }} />
       </div>
     </>
   );

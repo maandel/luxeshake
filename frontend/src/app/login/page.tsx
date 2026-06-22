@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 import { useAuthStore } from '../../lib/store/authStore';
 import { useToast } from '../../context/ToastContext';
+import GlobalFooter from '../../components/GlobalFooter';
 
 declare global {
   interface Window {
@@ -720,6 +721,7 @@ export default function LoginPage() {
               </>
             )}
           </div>
+          <GlobalFooter style={{ marginTop: 'auto', paddingTop: '3rem' }} />
         </div>
       </div>
     </>

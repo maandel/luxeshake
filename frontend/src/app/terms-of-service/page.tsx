@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import GlobalFooter from '../components/GlobalFooter';
 
 const SECTION_STYLES = {
   background: 'rgba(36,22,17,0.55)',
@@ -195,6 +196,8 @@ export default function TermsOfServicePage() {
           <Link href="/sustainability">Sustainability</Link>
           <Link href="/">Back to Home</Link>
         </div>
+        
+        <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem', paddingBottom: '1rem', zIndex: 10 }} />
       </div>
     </>
   );

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
+import GlobalFooter from '../../../components/GlobalFooter';
 
 interface OrderItem {
   id: string;
@@ -936,6 +937,8 @@ export default function OrderTrackingPage() {
 
           </div>
         </main>
+        
+        <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem', paddingBottom: '1rem', zIndex: 10 }} />
       </div>
     </>
   );

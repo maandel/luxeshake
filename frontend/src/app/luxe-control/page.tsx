@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 import { useAuthStore } from '../../lib/store/authStore';
 import { useToast } from '../../context/ToastContext';
+import GlobalFooter from '../../components/GlobalFooter';
 
 export default function LuxeControlLoginPage() {
   const router = useRouter();
@@ -55,6 +56,7 @@ export default function LuxeControlLoginPage() {
           min-height: 100vh;
           background: #0D0804;
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
           padding: 1.5rem;
@@ -353,6 +355,8 @@ export default function LuxeControlLoginPage() {
             <a href="/login">← Return to Customer Portal</a>
           </div>
         </div>
+
+        <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem', zIndex: 1 }} />
       </div>
     </>
   );

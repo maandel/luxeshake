@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 import { useAuthStore } from '../../lib/store/authStore';
 import { useToast } from '../../context/ToastContext';
+import GlobalFooter from '../../components/GlobalFooter';
 
 interface UserProfile {
   id: string;
@@ -1782,9 +1783,11 @@ export default function AccountPage() {
               </div>
             </div>
           </div>
+          </div>
         )}
 
-      </div>
+      <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem' }} />
+    </div >
     </>
   );
 }

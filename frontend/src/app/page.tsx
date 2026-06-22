@@ -18,6 +18,7 @@ const ContactSection = dynamic(() => import('../components/public/ContactSection
   ssr: false,
 });
 import CartFAB from '../components/public/CartFAB';
+import GlobalFooter from '../components/GlobalFooter';
 
 interface Product {
   id: string;
@@ -820,8 +821,7 @@ function SpaFooter({ onScrollToMenu }: { onScrollToMenu: () => void }) {
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <p style={{ fontSize: '0.75rem', color: '#99907c', margin: 0 }}>© {new Date().getFullYear()} LuxeShake. All rights reserved.</p>
-          <p style={{ fontSize: '0.75rem', color: '#99907c', margin: 0 }}>Powered by <a href="https://mandell.tech" target="_blank" rel="noopener noreferrer" style={{ color: '#d4af37', textDecoration: 'none' }}>MandelTech</a>.</p>
+          <GlobalFooter style={{ padding: 0 }} />
           <button onClick={onScrollToMenu} style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: '9px', padding: '0.5rem 1.1rem', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#d4af37', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", transition: 'all 0.2s' }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(212,175,55,0.16)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(212,175,55,0.4)'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(212,175,55,0.08)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(212,175,55,0.2)'; }}

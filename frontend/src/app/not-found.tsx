@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import GlobalFooter from '../components/GlobalFooter';
 
 export default function NotFound() {
   return (
@@ -40,6 +41,8 @@ export default function NotFound() {
       <Link href="/" className="btn-gold" style={{ textDecoration: 'none' }}>
         Back to Homepage
       </Link>
+      
+      <GlobalFooter style={{ marginTop: 'auto', paddingTop: '3rem' }} />
     </div>
   );
 }

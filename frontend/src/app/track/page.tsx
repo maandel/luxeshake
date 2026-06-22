@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import GlobalFooter from '../../components/GlobalFooter';
 
 export default function TrackOrderPage() {
   const router = useRouter();
@@ -431,6 +432,8 @@ export default function TrackOrderPage() {
             </p>
           </div>
         </main>
+        
+        <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem', paddingBottom: '1rem', zIndex: 10 }} />
       </div>
     </>
   );

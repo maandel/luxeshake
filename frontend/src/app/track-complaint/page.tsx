@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
+import GlobalFooter from '../../components/GlobalFooter';
 
 interface TicketMessage {
   id: string;
@@ -624,6 +625,8 @@ export default function TrackComplaintPage() {
 
           </div>
         </main>
+        
+        <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem', paddingBottom: '1rem', zIndex: 10 }} />
       </div>
     </>
   );

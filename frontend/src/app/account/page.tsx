@@ -226,7 +226,6 @@ export default function AccountPage() {
     e.preventDefault();
     if (!ticketSubject || !ticketMessage) { showToast('Please complete all fields.', 'error'); return; }
 
-    // Client-side validation: enforce backend min_length=20 for ticket message
     if (ticketMessage.trim().length < 20) {
       showToast('Details description must be at least 20 characters long.', 'error');
       return;
@@ -276,7 +275,12 @@ export default function AccountPage() {
     finally { setLoadingOrderDetail(false); }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (err) {
+      // ignore
+    }
     clearAuth();
     showToast('Logged out successfully.', 'info');
     router.push('/');

@@ -96,7 +96,12 @@ export default function LuxeControlLayout({
     checkPasswordResetStatus();
   }, [accessToken, role, pathname]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (err) {
+      // ignore
+    }
     clearAuth();
     showToast('Signed out of Luxe Control.', 'info');
     router.push('/luxe-control');

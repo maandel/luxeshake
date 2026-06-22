@@ -46,6 +46,8 @@ DEFAULTS = {
     "complaints_subtitle": "Our dedicated team is here to ensure your LuxeShake experience is nothing short of perfect.",  # noqa: E501
 }
 
+ALL_RESPONSE_FIELDS = list(DEFAULTS.keys())
+
 
 @router.get("", response_model=SiteContentResponse)
 async def get_site_content(db: AsyncSession = Depends(get_db)) -> Any:
@@ -56,19 +58,14 @@ async def get_site_content(db: AsyncSession = Depends(get_db)) -> Any:
         site_content = result.scalars().first()
         if not site_content:
             return {**DEFAULTS, "id": str(_uuid.uuid4())}
-        # Build response safely, falling back to defaults for missing columns
-        row: dict = {}
-        for key, default_val in {**DEFAULTS, "id": None}.items():
+        row: dict = {"id": str(site_content.id)}
+        for key in ALL_RESPONSE_FIELDS:
             try:
-                val = getattr(site_content, key, default_val)
-                row[key] = val if val is not None else default_val
+                row[key] = getattr(site_content, key, DEFAULTS.get(key))
             except Exception:
-                row[key] = default_val
-        if not row.get("id"):
-            row["id"] = str(site_content.id)
+                row[key] = DEFAULTS.get(key)
         return row
     except Exception as exc:
-        # If the table or column doesn't exist yet, return safe defaults
         import logging
 
         logging.getLogger(__name__).warning("site_content GET fallback: %s", exc)  # noqa: E501
@@ -87,7 +84,27 @@ async def update_site_content(
         site_content = SiteContent()
         db.add(site_content)
 
-    for field, val in content_in.model_dump().items():
+    for field, val in content_in.model_dump(exclude_unset=True).items():
+        setattr(site_content, field, val)
+
+    await db.commit()
+    await db.refresh(site_content)
+    return site_content
+
+
+@router.patch("", response_model=SiteContentResponse)
+async def patch_site_content(
+    content_in: SiteContentUpdate,
+    superadmin: Annotated[dict, Depends(require_superadmin)],
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(SiteContent))
+    site_content = result.scalars().first()
+    if not site_content:
+        site_content = SiteContent()
+        db.add(site_content)
+
+    for field, val in content_in.model_dump(exclude_unset=True).items():
         setattr(site_content, field, val)
 
     await db.commit()

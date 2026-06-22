@@ -1,8 +1,8 @@
 from app.database import Base, engine
 from app.models.delivery_area import DeliveryArea
 from app.models.product import Category, Product
-from app.models.user import User
 from app.models.site_content import SiteContent
+from app.models.user import User
 from app.utils.security import get_password_hash
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +21,51 @@ async def init_db():
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS must_reset_password BOOLEAN NOT NULL DEFAULT FALSE;"  # noqa: E501
             )
         )  # noqa: E501
+        await conn.execute(
+            text(
+                "ALTER TABLE site_content ADD COLUMN IF NOT EXISTS about_stat_1_value INTEGER NOT NULL DEFAULT 100;"  # noqa: E501
+            )
+        )
+        await conn.execute(
+            text(
+                "ALTER TABLE site_content ADD COLUMN IF NOT EXISTS about_stat_1_suffix VARCHAR(50) NOT NULL DEFAULT '%';"  # noqa: E501
+            )
+        )
+        await conn.execute(
+            text(
+                "ALTER TABLE site_content ADD COLUMN IF NOT EXISTS about_stat_1_label VARCHAR(100) NOT NULL DEFAULT 'Natural Dairy';"  # noqa: E501
+            )
+        )
+        await conn.execute(
+            text(
+                "ALTER TABLE site_content ADD COLUMN IF NOT EXISTS about_stat_2_value INTEGER NOT NULL DEFAULT 3;"  # noqa: E501
+            )
+        )
+        await conn.execute(
+            text(
+                "ALTER TABLE site_content ADD COLUMN IF NOT EXISTS about_stat_2_suffix VARCHAR(50) NOT NULL DEFAULT ' min';"  # noqa: E501
+            )
+        )
+        await conn.execute(
+            text(
+                "ALTER TABLE site_content ADD COLUMN IF NOT EXISTS about_stat_2_label VARCHAR(100) NOT NULL DEFAULT 'Per Batch';"  # noqa: E501
+            )
+        )
+        await conn.execute(
+            text(
+                "ALTER TABLE site_content ADD COLUMN IF NOT EXISTS about_stat_3_value INTEGER NOT NULL DEFAULT 6;"  # noqa: E501
+            )
+        )
+        await conn.execute(
+            text(
+                "ALTER TABLE site_content ADD COLUMN IF NOT EXISTS about_stat_3_suffix VARCHAR(50) NOT NULL DEFAULT '+';"  # noqa: E501
+            )
+        )
+        await conn.execute(
+            text(
+                "ALTER TABLE site_content ADD COLUMN IF NOT EXISTS about_stat_3_label VARCHAR(100) NOT NULL DEFAULT 'Collections';"  # noqa: E501
+            )
+        )
 
 
 async def seed_db(db: AsyncSession):
@@ -183,13 +228,13 @@ async def seed_db(db: AsyncSession):
     if not site_content:
         default_content = SiteContent(
             hero_title="Luxury in Every Sip & Bite.",
-            hero_subtitle="Hand-crafted with organic dairy, rare ingredients, and gourmet snacks.",
-            hero_image_url="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=1800&auto=format&fit=crop",
+            hero_subtitle="Hand-crafted with organic dairy, rare ingredients, and gourmet snacks.",  # noqa: E501
+            hero_image_url="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=1800&auto=format&fit=crop",  # noqa: E501
             about_title="Crafted for the Connoisseur",
-            about_content="Every shake and snack we serve is a testament to our dedication to quality. We source the finest vanilla beans, the most decadent chocolates, and the freshest organic dairy to create an experience that transcends the ordinary.\n\nWhether you're treating yourself after a long day or celebrating a special moment, LuxeShake promises a taste of pure elegance.",
-            about_image_url_1="https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=800",
-            about_image_url_2="https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=800",
-            about_image_url_3="https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=800",
+            about_content="Every shake and snack we serve is a testament to our dedication to quality. We source the finest vanilla beans, the most decadent chocolates, and the freshest organic dairy to create an experience that transcends the ordinary.\n\nWhether you're treating yourself after a long day or celebrating a special moment, LuxeShake promises a taste of pure elegance.",  # noqa: E501
+            about_image_url_1="https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=800",  # noqa: E501
+            about_image_url_2="https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=800",  # noqa: E501
+            about_image_url_3="https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=800",  # noqa: E501
             about_stat_1_value=100,
             about_stat_1_suffix="%",
             about_stat_1_label="Natural Dairy",
@@ -200,11 +245,11 @@ async def seed_db(db: AsyncSession):
             about_stat_3_suffix="+",
             about_stat_3_label="Collections",
             menu_title="The Menu",
-            menu_subtitle="Curated collections of our finest offerings. Select your size and add directly to your order.",
+            menu_subtitle="Curated collections of our finest offerings. Select your size and add directly to your order.",  # noqa: E501
             location_title="Our Sanctuaries",
-            location_subtitle="Experience LuxeShake in person. Select a location to view operating hours and precise directions.",
+            location_subtitle="Experience LuxeShake in person. Select a location to view operating hours and precise directions.",  # noqa: E501
             complaints_title="Concierge & Support",
-            complaints_subtitle="Our dedicated team is here to ensure your LuxeShake experience is nothing short of perfect."
+            complaints_subtitle="Our dedicated team is here to ensure your LuxeShake experience is nothing short of perfect.",  # noqa: E501
         )
         db.add(default_content)
 

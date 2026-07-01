@@ -1675,6 +1675,7 @@ export default function AccountPage() {
 
             </div>
           </div>
+          <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem', paddingBottom: '1rem', zIndex: 10 }} />
         </main>
 
         {/* ── Ticket Detail Modal overlay ── */}
@@ -1833,9 +1834,6 @@ export default function AccountPage() {
             </div>
           </div>
         )}
-
-        <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem', paddingBottom: '1rem', zIndex: 10 }} />
-      </main>
     </div>
     </>
   );

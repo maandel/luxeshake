@@ -1,4 +1,5 @@
 import logging
+import secrets
 import uuid
 from datetime import UTC, datetime
 from typing import Annotated
@@ -44,15 +45,14 @@ async def get_store_settings(db: AsyncSession = Depends(get_db)):
 
 
 async def generate_order_number(db: AsyncSession) -> str:
-    today_str = datetime.now(UTC).strftime("%Y%m%d")
-    prefix = f"LXS-{today_str}-"
-
-    result = await db.execute(
-        select(func.count(Order.id)).where(Order.order_number.like(f"{prefix}%"))  # noqa: E501
-    )
-    count = result.scalar() or 0
-    seq = count + 1
-    return f"{prefix}{seq:04d}"
+    while True:
+        random_suffix = secrets.token_hex(4).upper()
+        order_number = f"LXS-{random_suffix}"
+        result = await db.execute(
+            select(Order.id).where(Order.order_number == order_number)
+        )
+        if not result.scalars().first():
+            return order_number
 
 
 @router.post(

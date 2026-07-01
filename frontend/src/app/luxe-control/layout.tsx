@@ -55,14 +55,14 @@ export default function LuxeControlLayout({
           currentToken = access_token;
         } catch (refreshErr) {
           clearAuth();
-          router.push('/luxe-control');
+          router.replace('/luxe-control');
           return;
         }
       }
 
       if (!currentToken) {
         clearAuth();
-        router.push('/luxe-control');
+        router.replace('/luxe-control');
         return;
       }
 
@@ -71,7 +71,7 @@ export default function LuxeControlLayout({
       if (!['superadmin', 'manager', 'staff'].includes(currentRole || '')) {
         showToast('Unauthorized access.', 'error');
         clearAuth();
-        router.push('/luxe-control');
+        router.replace('/luxe-control');
         return;
       }
 
@@ -88,7 +88,7 @@ export default function LuxeControlLayout({
       } catch (err: any) {
         showToast('Session validation failed. Please login again.', 'error');
         clearAuth();
-        router.push('/luxe-control');
+        router.replace('/luxe-control');
       } finally {
         setProfileLoading(false);
         setAuthorized(true);
@@ -106,7 +106,7 @@ export default function LuxeControlLayout({
     }
     clearAuth();
     showToast('Signed out of Luxe Control.', 'info');
-    router.push('/luxe-control');
+    router.replace('/luxe-control');
   };
 
   if (!authorized || (accessToken && profileLoading)) {

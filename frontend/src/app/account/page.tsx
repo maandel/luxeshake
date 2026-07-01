@@ -151,7 +151,7 @@ export default function AccountPage() {
 
       if (!currentToken) {
         clearAuth();
-        router.push('/login');
+        router.replace('/login');
         return;
       }
 
@@ -165,7 +165,7 @@ export default function AccountPage() {
       } catch (profileErr) {
         showToast('Session expired. Please log in again.', 'error');
         clearAuth();
-        router.push('/login');
+        router.replace('/login');
       } finally {
         setLoadingProfile(false);
       }
@@ -285,7 +285,7 @@ export default function AccountPage() {
     }
     clearAuth();
     showToast('Logged out successfully.', 'info');
-    router.push('/');
+    router.replace('/login');
   };
 
   if (loadingProfile) {

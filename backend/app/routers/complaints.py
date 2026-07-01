@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from datetime import UTC, datetime
 from typing import Annotated
@@ -35,10 +36,14 @@ router = APIRouter(tags=["Complaints & Tickets"])
 
 
 async def generate_ticket_number(db: AsyncSession) -> str:
-    result = await db.execute(select(func.count(Complaint.id)))
-    count = result.scalar() or 0
-    seq = count + 1
-    return f"TKT-{seq:06d}"
+    while True:
+        random_suffix = secrets.token_hex(4).upper()
+        ticket_number = f"TKT-{random_suffix}"
+        result = await db.execute(
+            select(Complaint.id).where(Complaint.ticket_number == ticket_number)
+        )
+        if not result.scalars().first():
+            return ticket_number
 
 
 @router.post("/complaints/contact", status_code=status.HTTP_201_CREATED)

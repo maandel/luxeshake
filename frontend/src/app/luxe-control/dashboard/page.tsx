@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
   // Manager & Superadmin View: Full analytics details
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
         <div>
           <h2 style={{ fontFamily: 'Cormorant Garamond', fontSize: '2.2rem', color: 'var(--gold-lt)', margin: 0 }}>
             LuxeControl Dashboard
@@ -136,7 +136,7 @@ export default function AdminDashboardPage() {
       <div className="gold-rule"></div>
 
       {/* Stats Cards grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '3rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
         <div style={{ background: 'rgba(26,12,8,0.4)', border: '1px solid rgba(201, 150, 62, 0.12)', borderRadius: '12px', padding: '1.5rem' }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Today's Revenue</span>
           <strong style={{ display: 'block', fontSize: '2rem', color: 'var(--gold-lt)', fontFamily: 'Cormorant Garamond', marginTop: '0.5rem' }}>

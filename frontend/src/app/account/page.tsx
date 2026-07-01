@@ -1408,7 +1408,7 @@ export default function AccountPage() {
 
                     <div className="acc-form-section">
                       <h3 className="acc-form-title">Quick Actions</h3>
-                      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
                         <button className="acc-btn-gold" onClick={() => setActiveTab('orders')}>
                           <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: '16px' }}>receipt_long</span>
                           View Orders

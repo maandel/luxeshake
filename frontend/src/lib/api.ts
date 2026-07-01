@@ -12,9 +12,6 @@ const API_BASE_URL = rawBaseUrl;
 export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // Required for HttpOnly refresh token cookies
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Request interceptor to inject JWT access token

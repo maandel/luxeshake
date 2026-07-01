@@ -127,7 +127,9 @@ export default function SiteContentPage() {
       showToast(`${section} image uploaded successfully`, 'success');
       await fetchContent();
     } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Image upload failed', 'error');
+      const detail = err.response?.data?.detail;
+      const msg = Array.isArray(detail) ? detail[0]?.msg : detail;
+      showToast(msg || 'Image upload failed', 'error');
     }
   };
 

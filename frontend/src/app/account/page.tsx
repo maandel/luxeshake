@@ -130,6 +130,7 @@ export default function AccountPage() {
   const [loadingOrderDetail, setLoadingOrderDetail] = useState(false);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const initializeAuthAndProfile = async () => {
@@ -341,6 +342,8 @@ export default function AccountPage() {
           padding: 0;
           position: relative;
           overflow: hidden;
+          transition: transform 0.3s ease;
+          z-index: 100;
         }
 
         .acc-sidebar::before {
@@ -613,40 +616,63 @@ export default function AccountPage() {
           overflow-y: auto;
         }
 
-        @media (max-width: 768px) {
-          .acc-sidebar { display: none; }
-          .acc-topbar { display: none; }
-          .acc-content { padding: 1.5rem; }
-          .acc-mobile-tabs { display: flex !important; }
+        /* Hamburger button (mobile) */
+        .acc-hamburger {
+          display: none;
+          background: none;
+          border: none;
+          color: #f2ca50;
+          cursor: pointer;
+          font-size: 24px;
+          padding: 0;
+          flex-shrink: 0;
+          line-height: 1;
         }
 
-        /* Mobile tabs bar */
-        .acc-mobile-tabs {
+        /* Sidebar overlay (mobile) */
+        .acc-sidebar-overlay {
           display: none;
-          gap: 0.35rem;
-          overflow-x: auto;
-          padding: 1rem;
-          background: #0D0804;
-          border-bottom: 1px solid rgba(212,175,55,0.1);
-          scrollbar-width: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.55);
+          z-index: 90;
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
         }
-        .acc-mobile-tabs::-webkit-scrollbar { display: none; }
-        
-        .acc-mobile-tab {
-          flex-shrink: 0;
-          padding: 0.45rem 1rem;
-          border-radius: 100px;
-          font-size: 0.75rem;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          border: 1px solid rgba(212,175,55,0.15);
-          background: transparent;
+        .acc-sidebar-overlay.open { display: block; }
+
+        /* Close button inside sidebar header (mobile only) */
+        .acc-sidebar-close {
+          display: none;
+          background: none;
+          border: none;
           color: #99907c;
           cursor: pointer;
-          font-family: 'DM Sans', sans-serif;
-          transition: all 0.2s;
+          line-height: 1;
+          padding: 0;
+          transition: color 0.2s;
+          flex-shrink: 0;
         }
+        .acc-sidebar-close:hover { color: #f2ca50; }
+
+        @media (max-width: 768px) {
+          .acc-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 280px;
+            transform: translateX(-100%);
+          }
+          .acc-sidebar.open { transform: translateX(0); }
+          .acc-hamburger { display: block; }
+          .acc-sidebar-close { display: block; }
+          .acc-topbar { padding: 0 1rem; }
+          .acc-content { padding: 1.5rem 1rem; }
+        }
+
+        /* Mobile pill-tabs — hidden, replaced by drawer */
+        .acc-mobile-tabs { display: none !important; }
         .acc-mobile-tab.active {
           background: rgba(212,175,55,0.12);
           border-color: #d4af37;
@@ -1215,11 +1241,24 @@ export default function AccountPage() {
 
       <div className="acc-layout">
 
+        {/* ── Sidebar Overlay (mobile) ── */}
+        <div
+          className={`acc-sidebar-overlay${sidebarOpen ? ' open' : ''}`}
+          onClick={() => setSidebarOpen(false)}
+        />
+
         {/* ── Left Sidebar Navigation ── */}
-        <aside className="acc-sidebar">
-          <div className="acc-sidebar-head">
-            <Link href="/" className="acc-sidebar-wordmark">LuxeShake</Link>
-            <div className="acc-sidebar-system-label">Member Portal</div>
+        <aside className={`acc-sidebar${sidebarOpen ? ' open' : ''}`}>
+          <div className="acc-sidebar-head" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+              <div>
+                <Link href="/" className="acc-sidebar-wordmark">LuxeShake</Link>
+                <div className="acc-sidebar-system-label">Member Portal</div>
+              </div>
+              <button className="acc-sidebar-close" onClick={() => setSidebarOpen(false)}>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+              </button>
+            </div>
           </div>
 
           <div className="acc-user-card">
@@ -1238,7 +1277,7 @@ export default function AccountPage() {
               <button
                 key={tab}
                 className={`acc-nav-item${activeTab === tab ? ' active' : ''}`}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => { setActiveTab(tab); setSidebarOpen(false); }}
               >
                 <span className="acc-nav-icon">{TAB_ICONS[tab]}</span>
                 {TAB_LABELS[tab]}
@@ -1256,6 +1295,9 @@ export default function AccountPage() {
 
           {/* Top Breadcrumbs Header bar */}
           <div className="acc-topbar">
+            <button className="acc-hamburger" onClick={() => setSidebarOpen(true)}>
+              <span className="material-symbols-outlined">menu</span>
+            </button>
             <div className="acc-topbar-breadcrumb">
               <span>Member Portal</span>
               <span>/</span>

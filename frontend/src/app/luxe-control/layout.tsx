@@ -507,20 +507,35 @@ export default function LuxeControlLayout({
           cursor: pointer;
           font-size: 24px;
           padding: 0;
+          line-height: 1;
         }
+
+        .lc-sidebar-close {
+          display: none;
+          background: none;
+          border: none;
+          color: #99907c;
+          cursor: pointer;
+          line-height: 1;
+          padding: 0;
+          transition: color 0.2s;
+          flex-shrink: 0;
+        }
+        .lc-sidebar-close:hover { color: #f2ca50; }
 
         .lc-sidebar-overlay {
           display: none;
           position: fixed;
           inset: 0;
-          background: rgba(0,0,0,0.5);
+          background: rgba(0,0,0,0.55);
           z-index: 90;
           backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
         }
 
         @media (max-width: 768px) {
           .lc-sidebar {
-            position: absolute;
+            position: fixed;
             height: 100%;
             transform: translateX(-100%);
           }
@@ -528,6 +543,9 @@ export default function LuxeControlLayout({
             transform: translateX(0);
           }
           .lc-hamburger {
+            display: block;
+          }
+          .lc-sidebar-close {
             display: block;
           }
           .lc-sidebar-overlay.open {
@@ -703,11 +721,18 @@ export default function LuxeControlLayout({
         <div className={`lc-sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={() => setSidebarOpen(false)} />
         {/* ── Sidebar ── */}
         <aside className={`lc-sidebar ${sidebarOpen ? 'open' : ''}`}>
-          <div className="lc-sidebar-head">
-            <Link href="/luxe-control/dashboard" className="lc-sidebar-wordmark">
-              LuxeControl
-            </Link>
-            <div className="lc-sidebar-system-label">Management System</div>
+          <div className="lc-sidebar-head" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+              <div>
+                <Link href="/luxe-control/dashboard" className="lc-sidebar-wordmark">
+                  LuxeControl
+                </Link>
+                <div className="lc-sidebar-system-label">Management System</div>
+              </div>
+              <button className="lc-sidebar-close" onClick={() => setSidebarOpen(false)}>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+              </button>
+            </div>
           </div>
 
           <nav className="lc-nav">

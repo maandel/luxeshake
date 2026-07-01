@@ -329,6 +329,7 @@ export default function AccountPage() {
           background: #110804;
           font-family: 'DM Sans', sans-serif;
           color: #eae1d4;
+          overflow: hidden;
         }
 
         /* ── Sidebar ── */
@@ -663,6 +664,8 @@ export default function AccountPage() {
             height: 100%;
             width: 280px;
             transform: translateX(-100%);
+            flex: 0 0 0;
+            min-width: 0;
           }
           .acc-sidebar.open { transform: translateX(0); }
           .acc-hamburger { display: block; }

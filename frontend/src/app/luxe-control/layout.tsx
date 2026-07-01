@@ -167,6 +167,7 @@ export default function LuxeControlLayout({
           display: flex;
           background: #110804;
           font-family: 'DM Sans', sans-serif;
+          overflow: hidden;
         }
 
         /* ── Sidebar ── */
@@ -536,8 +537,11 @@ export default function LuxeControlLayout({
         @media (max-width: 768px) {
           .lc-sidebar {
             position: fixed;
+            width: 256px;
             height: 100%;
             transform: translateX(-100%);
+            flex: 0 0 0;
+            min-width: 0;
           }
           .lc-sidebar.open {
             transform: translateX(0);

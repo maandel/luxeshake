@@ -656,7 +656,11 @@ export default function AccountPage() {
         }
         .acc-sidebar-close:hover { color: #f2ca50; }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
+          .acc-main {
+            width: 100%;
+            max-width: 100vw;
+          }
           .acc-sidebar {
             position: fixed;
             top: 0;
@@ -1830,7 +1834,8 @@ export default function AccountPage() {
           </div>
         )}
 
-      <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem', paddingBottom: '1rem', zIndex: 10 }} />
+        <GlobalFooter style={{ marginTop: 'auto', paddingTop: '2rem', paddingBottom: '1rem', zIndex: 10 }} />
+      </main>
     </div>
     </>
   );

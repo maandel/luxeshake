@@ -534,7 +534,11 @@ export default function LuxeControlLayout({
           -webkit-backdrop-filter: blur(4px);
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
+          .lc-main {
+            width: 100%;
+            max-width: 100vw;
+          }
           .lc-sidebar {
             position: fixed;
             width: 256px;

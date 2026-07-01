@@ -63,12 +63,14 @@ async def global_exception_handler(request: Request, exc: Exception):
         headers["Access-Control-Allow-Origin"] = origin
         headers["Access-Control-Allow-Credentials"] = "true"
     import logging
+
     logging.getLogger("app").exception("Unhandled server error: %s", exc)
     return JSONResponse(
         status_code=500,
         content={"detail": "An internal server error occurred."},
         headers=headers,
     )
+
 
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 

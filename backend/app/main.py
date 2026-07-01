@@ -15,8 +15,9 @@ from app.routers import (
     transactions,
     users,
 )
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 
@@ -51,6 +52,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch-all so that unhandled 500s still include CORS headers."""
+    origin = request.headers.get("origin", "")
+    headers = {}
+    if origin in allowed_origins:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+    import logging
+    logging.getLogger("app").exception("Unhandled server error: %s", exc)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal server error occurred."},
+        headers=headers,
+    )
 
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 

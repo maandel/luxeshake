@@ -144,19 +144,20 @@ async def upload_site_image(
             detail="Only JPEG, PNG, and WebP images are supported",
         )
 
+    # Read content once; check size; reuse the bytes below
     try:
-        file.file.seek(0, 2)
-        size = file.file.tell()
-        file.file.seek(0)
-        if size > 5 * 1024 * 1024:
+        file_content = await file.read()
+        if len(file_content) > 5 * 1024 * 1024:
             raise HTTPException(
                 status_code=400,
                 detail="File size exceeds maximum limit of 5MB",
             )
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=400,
-            detail="Could not determine file size",
+            detail="Could not read uploaded file",
         )
 
     if settings.STORAGE_BACKEND == "cloudinary":
@@ -172,7 +173,6 @@ async def upload_site_image(
                 detail="Cloudinary storage is enabled but credentials are not configured",  # noqa: E501
             )
 
-        file_content = await file.read()
         timestamp = int(time.time())
         params_to_sign = f"folder=luxeshake&timestamp={timestamp}"
         signature = hashlib.sha1(
@@ -231,7 +231,7 @@ async def upload_site_image(
         filename = f"{section}_image{ext}"
         file_path = os.path.join(site_upload_dir, filename)
         with open(file_path, "wb") as buffer:
-            buffer.write(await file.read())
+            buffer.write(file_content)
 
         if section == "hero":
             site_content.hero_image_path = f"/static/uploads/site_content/{filename}"  # noqa: E501

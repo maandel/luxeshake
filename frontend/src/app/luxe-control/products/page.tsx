@@ -172,9 +172,7 @@ export default function AdminProductsPage() {
         setUploadingImage(true);
         const formData = new FormData();
         formData.append('file', selectedFile);
-        await api.post(`/admin/products/${product.id}/image`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.post(`/admin/products/${product.id}/image`, formData);
         showToast('Product image uploaded.', 'success');
       }
 

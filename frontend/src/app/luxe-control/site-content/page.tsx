@@ -123,9 +123,7 @@ export default function SiteContentPage() {
     uploadData.append('file', file);
     
     try {
-      await api.post(`/site-content/image/${section}`, uploadData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await api.post(`/site-content/image/${section}`, uploadData);
       showToast(`${section} image uploaded successfully`, 'success');
       await fetchContent();
     } catch (err: any) {

@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 import time
 from typing import Annotated, Any
@@ -14,6 +15,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/site-content", tags=["Site Content"])
+
+logger = logging.getLogger("app.site_content")
 
 
 DEFAULTS = {
@@ -220,10 +223,13 @@ async def upload_site_image(
                     "detail": "Image uploaded to Cloudinary successfully",
                     "image_url": secure_url,
                 }
+            except HTTPException:
+                raise
             except Exception as e:
+                logger.exception("Cloudinary upload failed: %s", e)
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Cloudinary HTTP exception: {str(e)}",  # noqa: E501
+                    detail=f"Cloudinary upload error: {str(e)}",
                 )
     else:
         site_upload_dir = os.path.join(settings.UPLOAD_DIR, "site_content")

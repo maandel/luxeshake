@@ -131,9 +131,10 @@ async def upload_site_image(
     result = await db.execute(select(SiteContent))
     site_content = result.scalars().first()
     if not site_content:
-        site_content = SiteContent()
+        site_content = SiteContent(**DEFAULTS)
         db.add(site_content)
         await db.commit()
+        await db.refresh(site_content)
 
     content_type = file.content_type or ""
     allowed_types = ["image/jpeg", "image/png", "image/webp"]

@@ -31,7 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCart }) => {
 
   const NAV_LINKS = [
     { label: 'Our Story', href: '/#about' },
-    { label: 'The Menu', href: '/menu' },
+    { label: 'Our Menu', href: '/menu' },
     { label: 'Locations', href: '/#locations' },
     { label: 'Contact', href: '/#contact' },
     { label: 'Track Order', href: '/track' },

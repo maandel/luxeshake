@@ -34,10 +34,7 @@ interface Product {
 
 const BACKEND = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
 
-const MOCK = [
-  { id: '1', name: 'Golden Velvet Cacao', description: 'Single-origin dark chocolate, 24k gold leaf, Tahitian vanilla bean cream.', small_price: 15000, big_price: 22000, category: 'Signature', tag: 'Bestseller' },
-  { id: '2', name: 'The Truffle Strawberry', description: 'Wild strawberries infused with white truffle essence, topped with spun sugar.', small_price: 18000, big_price: 26000, category: 'Signature', tag: 'New' },
-];
+
 
 export interface SiteContentData {
   hero_title: string;
@@ -170,8 +167,8 @@ function CatalogSection({ onOpenCart, content }: { onOpenCart: () => void, conte
 
   useEffect(() => {
     api.get('/products')
-      .then(r => setProducts(r.data?.length ? r.data : MOCK))
-      .catch(() => setProducts(MOCK))
+      .then(r => setProducts(r.data || []))
+      .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -194,7 +191,7 @@ function CatalogSection({ onOpenCart, content }: { onOpenCart: () => void, conte
           <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#d4af37' }}>
             Artisanal Catalog
           </div>
-          <h2 style={{ fontFamily: "'Libre Caslon Text', serif", fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 400, color: '#eae1d4', margin: 0, lineHeight: 1.15 }} dangerouslySetInnerHTML={{ __html: content?.menu_title || 'The <em style="color: #f2ca50; font-style: italic;">Menu</em>' }} />
+          <h2 style={{ fontFamily: "'Libre Caslon Text', serif", fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 400, color: '#eae1d4', margin: 0, lineHeight: 1.15 }} dangerouslySetInnerHTML={{ __html: content?.menu_title || 'Our <em style="color: #f2ca50; font-style: italic;">Menu</em>' }} />
           <p style={{ fontSize: '0.95rem', color: '#99907c', maxWidth: '480px', lineHeight: 1.7, margin: 0 }}>
             {content?.menu_subtitle || 'Curated collections of our finest offerings. Select your size and add directly to your order.'}
           </p>
@@ -462,7 +459,7 @@ function SpaNavbar({ onOpenCart, cartCount }: { onOpenCart: () => void; cartCoun
           {/* Center links */}
           <div className="spa-center">
             <button className="spa-nav-link" onClick={() => scrollTo('about')}>Our Story</button>
-            <button className="spa-nav-link" onClick={() => scrollTo('menu')}>The Menu</button>
+            <button className="spa-nav-link" onClick={() => scrollTo('menu')}>Our Menu</button>
             <button className="spa-nav-link" onClick={() => scrollTo('locations')}>Locations</button>
             <button className="spa-nav-link" onClick={() => scrollTo('contact')}>Contact</button>
             <Link href="/track" className="spa-nav-link">Track Order</Link>
@@ -515,7 +512,7 @@ function SpaNavbar({ onOpenCart, cartCount }: { onOpenCart: () => void; cartCoun
       {/* Mobile drawer */}
       <div className={`spa-drawer${mobileOpen ? ' open' : ''}`}>
         <button className="spa-drawer-link" onClick={() => scrollTo('about')}>Our Story</button>
-        <button className="spa-drawer-link" onClick={() => scrollTo('menu')}>The Menu</button>
+        <button className="spa-drawer-link" onClick={() => scrollTo('menu')}>Our Menu</button>
         <button className="spa-drawer-link" onClick={() => scrollTo('locations')}>Locations</button>
         <button className="spa-drawer-link" onClick={() => scrollTo('contact')}>Contact & Complaints</button>
         <Link href="/track" className="spa-drawer-link" onClick={() => setMobileOpen(false)}>Track Order</Link>
@@ -852,12 +849,16 @@ function SpaFooter({ onScrollToMenu }: { onScrollToMenu: () => void }) {
 export default function HomePage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [siteContent, setSiteContent] = useState<SiteContentData | null>(null);
+  const [contentLoading, setContentLoading] = useState(true);
   const router = useRouter();
   const cartItems = useCartStore(s => s.items);
   const cartCount = cartItems.reduce((sum, i) => sum + i.qty, 0);
 
   useEffect(() => {
-    api.get('/site-content').then(r => setSiteContent(r.data)).catch(() => {});
+    api.get('/site-content')
+      .then(r => setSiteContent(r.data))
+      .catch(() => {})
+      .finally(() => setContentLoading(false));
   }, []);
 
   const scrollToMenu = () => document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth' });
@@ -866,6 +867,18 @@ export default function HomePage() {
     setIsCartOpen(false);
     router.push('/checkout');
   };
+
+  if (contentLoading) {
+    return (
+      <div style={{ background: '#1A0F0A', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ width: '36px', height: '36px', border: '2px solid rgba(212,175,55,0.2)', borderTopColor: '#d4af37', borderRadius: '50%', animation: 'luxeSpin 0.9s linear infinite' }} />
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(212,175,55,0.5)' }}>LuxeShake</span>
+        </div>
+        <style>{`@keyframes luxeSpin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: '#1A0F0A', minHeight: '100vh', color: '#eae1d4' }}>

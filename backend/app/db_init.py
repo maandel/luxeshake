@@ -244,7 +244,7 @@ async def seed_db(db: AsyncSession):
             about_stat_3_value=6,
             about_stat_3_suffix="+",
             about_stat_3_label="Collections",
-            menu_title="The Menu",
+            menu_title="Our Menu",
             menu_subtitle="Curated collections of our finest offerings. Select your size and add directly to your order.",  # noqa: E501
             location_title="Our Sanctuaries",
             location_subtitle="Experience LuxeShake in person. Select a location to view operating hours and precise directions.",  # noqa: E501

@@ -2,8 +2,7 @@ import os
 from contextlib import asynccontextmanager
 
 from app.config import settings
-from app.database import SessionLocal
-from app.db_init import init_db, seed_db
+from app.db_init import init_db
 from app.routers import (
     admin,
     auth,
@@ -24,10 +23,6 @@ from fastapi.staticfiles import StaticFiles
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-
-    async with SessionLocal() as db:
-        await seed_db(db)
-
     yield
 
 

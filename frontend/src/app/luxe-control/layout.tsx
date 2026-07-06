@@ -85,28 +85,26 @@ export default function LuxeControlLayout({
         } else {
           setMustResetPassword(false);
         }
+        setAuthorized(true);
       } catch (err: any) {
         showToast('Session validation failed. Please login again.', 'error');
         clearAuth();
         router.replace('/luxe-control');
+        return;
       } finally {
         setProfileLoading(false);
-        setAuthorized(true);
       }
     };
 
     checkPasswordResetStatus();
   }, [accessToken, role, pathname]);
 
-  const handleLogout = async () => {
-    try {
-      await api.post('/auth/logout');
-    } catch (err) {
-      // ignore
-    }
+  const handleLogout = () => {
     clearAuth();
-    showToast('Signed out of Luxe Control.', 'info');
     router.replace('/luxe-control');
+    showToast('Signed out of Luxe Control.', 'info');
+    // Fire-and-forget: clear the refresh token cookie on the server
+    api.post('/auth/logout').catch(() => {});
   };
 
   if (!authorized || (accessToken && profileLoading)) {

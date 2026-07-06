@@ -22,6 +22,7 @@ from app.schemas.order import (
     StoreSettingsResponse,
 )
 from app.services.email_service import EmailService
+from app.services.cache import cache_get, cache_set
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,15 +33,23 @@ logger = logging.getLogger("app.orders")
 router = APIRouter(tags=["Orders"])
 
 
+_STORE_SETTINGS_TTL = 120
+
+
 @router.get("/store-settings", response_model=StoreSettingsResponse)
 async def get_store_settings(db: AsyncSession = Depends(get_db)):
+    cached = await cache_get("store_settings")
+    if cached is not None:
+        return cached
     result = await db.execute(select(StoreSettings))
     settings = result.scalars().first()
     if not settings:
-        return StoreSettings(
+        fallback = StoreSettings(
             pickup_address="LuxeShake Boutique, 12 Presidential Road, Enugu, Nigeria",  # noqa: E501
             pickup_phone="+234 812 345 6789",
         )
+        return fallback
+    await cache_set("store_settings", settings, _STORE_SETTINGS_TTL)
     return settings
 
 

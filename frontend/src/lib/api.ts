@@ -51,6 +51,10 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Clear auth state if refresh fails
         useAuthStore.getState().clearAuth();
+        // Force redirect to login if on an admin portal page
+        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/luxe-control') && window.location.pathname !== '/luxe-control') {
+          window.location.href = '/luxe-control';
+        }
         return Promise.reject(refreshError);
       }
     }

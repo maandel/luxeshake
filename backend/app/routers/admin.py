@@ -14,7 +14,7 @@ from app.models.store_settings import StoreSettings
 from app.models.user import User
 from app.schemas.order import StoreSettingsResponse, StoreSettingsUpdate
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
-from app.services.cache import cache_get, cache_set
+from app.services.cache import cache_get, cache_set, cache_invalidate
 from app.services.email_service import EmailService
 from app.utils.security import get_password_hash
 from fastapi import (
@@ -390,4 +390,5 @@ async def update_store_settings(
 
     await db.commit()
     await db.refresh(settings)
+    await cache_invalidate("store_settings")
     return settings

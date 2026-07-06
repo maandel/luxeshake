@@ -160,7 +160,7 @@ async def login(
 
 @router.post("/refresh", response_model=Token)
 async def refresh(
-    request: Request, response: Response, db: AsyncSession = Depends(get_db)
+    request: Request, db: AsyncSession = Depends(get_db)
 ):
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
@@ -192,17 +192,6 @@ async def refresh(
 
     new_access_token = create_access_token(
         data={"sub": str(user.id), "role": user.role}
-    )
-
-    new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
-
-    response.set_cookie(
-        key="refresh_token",
-        value=new_refresh_token,
-        httponly=True,
-        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
-        samesite="none",
-        secure=True,
     )
 
     return Token(

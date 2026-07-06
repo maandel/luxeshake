@@ -13,6 +13,7 @@ export default function SiteContentPage() {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingSection, setUploadingSection] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     hero_title: '',
@@ -119,6 +120,8 @@ export default function SiteContentPage() {
       showToast('Image must be less than 5MB', 'error');
       return;
     }
+    
+    setUploadingSection(section);
     const uploadData = new FormData();
     uploadData.append('file', file);
     
@@ -130,6 +133,8 @@ export default function SiteContentPage() {
       const detail = err.response?.data?.detail;
       const msg = Array.isArray(detail) ? detail[0]?.msg : detail;
       showToast(msg || 'Image upload failed', 'error');
+    } finally {
+      setUploadingSection(null);
     }
   };
 
@@ -287,16 +292,24 @@ export default function SiteContentPage() {
             {renderImagePreview('hero')}
             <input 
               type="file" 
-              accept="image/jpeg, image/png, image/webp" 
+              accept="image/jpeg, image/png, image/webp, image/avif" 
               ref={heroFileInput} 
               style={{ display: 'none' }}
+              disabled={uploadingSection === 'hero'}
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) handleImageUpload('hero', e.target.files[0]);
               }}
             />
-            <button className="upload-btn" onClick={() => heroFileInput.current?.click()}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>upload</span>
-              Upload New Hero Image
+            <button 
+              className="upload-btn" 
+              onClick={() => heroFileInput.current?.click()}
+              disabled={uploadingSection === 'hero'}
+              style={{ opacity: uploadingSection === 'hero' ? 0.6 : 1, cursor: uploadingSection === 'hero' ? 'wait' : 'pointer' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                {uploadingSection === 'hero' ? 'hourglass_empty' : 'upload'}
+              </span>
+              {uploadingSection === 'hero' ? 'Uploading...' : 'Upload New Hero Image'}
             </button>
           </div>
         </div>
@@ -355,28 +368,31 @@ export default function SiteContentPage() {
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#99907c', marginBottom: '0.5rem' }}>About Image 1 (The Recipe)</label>
               {renderImagePreview('about_1')}
-              <input type="file" accept="image/jpeg, image/png, image/webp" ref={aboutFileInput1} style={{ display: 'none' }}
+              <input type="file" accept="image/jpeg, image/png, image/webp, image/avif" ref={aboutFileInput1} style={{ display: 'none' }} disabled={uploadingSection === 'about_1'}
                 onChange={(e) => { if (e.target.files && e.target.files[0]) handleImageUpload('about_1', e.target.files[0]); }} />
-              <button className="upload-btn" onClick={() => aboutFileInput1.current?.click()}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>upload</span> Upload Image 1
+              <button className="upload-btn" onClick={() => aboutFileInput1.current?.click()} disabled={uploadingSection === 'about_1'} style={{ opacity: uploadingSection === 'about_1' ? 0.6 : 1, cursor: uploadingSection === 'about_1' ? 'wait' : 'pointer' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{uploadingSection === 'about_1' ? 'hourglass_empty' : 'upload'}</span> 
+                {uploadingSection === 'about_1' ? 'Uploading...' : 'Upload Image 1'}
               </button>
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#99907c', marginBottom: '0.5rem' }}>About Image 2 (Ingredients)</label>
               {renderImagePreview('about_2')}
-              <input type="file" accept="image/jpeg, image/png, image/webp" ref={aboutFileInput2} style={{ display: 'none' }}
+              <input type="file" accept="image/jpeg, image/png, image/webp, image/avif" ref={aboutFileInput2} style={{ display: 'none' }} disabled={uploadingSection === 'about_2'}
                 onChange={(e) => { if (e.target.files && e.target.files[0]) handleImageUpload('about_2', e.target.files[0]); }} />
-              <button className="upload-btn" onClick={() => aboutFileInput2.current?.click()}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>upload</span> Upload Image 2
+              <button className="upload-btn" onClick={() => aboutFileInput2.current?.click()} disabled={uploadingSection === 'about_2'} style={{ opacity: uploadingSection === 'about_2' ? 0.6 : 1, cursor: uploadingSection === 'about_2' ? 'wait' : 'pointer' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{uploadingSection === 'about_2' ? 'hourglass_empty' : 'upload'}</span> 
+                {uploadingSection === 'about_2' ? 'Uploading...' : 'Upload Image 2'}
               </button>
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#99907c', marginBottom: '0.5rem' }}>About Image 3 (The Pour)</label>
               {renderImagePreview('about_3')}
-              <input type="file" accept="image/jpeg, image/png, image/webp" ref={aboutFileInput3} style={{ display: 'none' }}
+              <input type="file" accept="image/jpeg, image/png, image/webp, image/avif" ref={aboutFileInput3} style={{ display: 'none' }} disabled={uploadingSection === 'about_3'}
                 onChange={(e) => { if (e.target.files && e.target.files[0]) handleImageUpload('about_3', e.target.files[0]); }} />
-              <button className="upload-btn" onClick={() => aboutFileInput3.current?.click()}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>upload</span> Upload Image 3
+              <button className="upload-btn" onClick={() => aboutFileInput3.current?.click()} disabled={uploadingSection === 'about_3'} style={{ opacity: uploadingSection === 'about_3' ? 0.6 : 1, cursor: uploadingSection === 'about_3' ? 'wait' : 'pointer' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{uploadingSection === 'about_3' ? 'hourglass_empty' : 'upload'}</span> 
+                {uploadingSection === 'about_3' ? 'Uploading...' : 'Upload Image 3'}
               </button>
             </div>
           </div>

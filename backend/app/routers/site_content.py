@@ -10,6 +10,7 @@ from app.database import get_db
 from app.dependencies.auth_deps import require_superadmin
 from app.models.site_content import SiteContent
 from app.schemas.site_content import SiteContentResponse, SiteContentUpdate
+from app.services.cache import cache_get, cache_invalidate, cache_set
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,6 +18,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter(prefix="/site-content", tags=["Site Content"])
 
 logger = logging.getLogger("app.site_content")
+
+_SITE_CONTENT_TTL = 120
 
 
 DEFAULTS = {
@@ -53,20 +56,27 @@ ALL_RESPONSE_FIELDS = list(DEFAULTS.keys())
 
 
 @router.get("", response_model=SiteContentResponse)
-async def get_site_content(db: AsyncSession = Depends(get_db)) -> Any:
+async def get_site_content(response: Any = None, db: AsyncSession = Depends(get_db)) -> Any:
     import uuid as _uuid
+    from fastapi import Response as _Response
+
+    cached = await cache_get("site_content")
+    if cached is not None:
+        return cached
 
     try:
         result = await db.execute(select(SiteContent))
         site_content = result.scalars().first()
         if not site_content:
-            return {**DEFAULTS, "id": str(_uuid.uuid4())}
+            data = {**DEFAULTS, "id": str(_uuid.uuid4())}
+            return data
         row: dict = {"id": str(site_content.id)}
         for key in ALL_RESPONSE_FIELDS:
             try:
                 row[key] = getattr(site_content, key, DEFAULTS.get(key))
             except Exception:
                 row[key] = DEFAULTS.get(key)
+        await cache_set("site_content", row, _SITE_CONTENT_TTL)
         return row
     except Exception as exc:
         import logging
@@ -92,6 +102,7 @@ async def update_site_content(
 
     await db.commit()
     await db.refresh(site_content)
+    await cache_invalidate("site_content")
     return site_content
 
 
@@ -112,6 +123,7 @@ async def patch_site_content(
 
     await db.commit()
     await db.refresh(site_content)
+    await cache_invalidate("site_content")
     return site_content
 
 
@@ -137,15 +149,15 @@ async def upload_site_image(
         await db.refresh(site_content)
 
     content_type = file.content_type or ""
-    allowed_types = ["image/jpeg", "image/png", "image/webp"]
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/avif"]
     ext = os.path.splitext(file.filename)[1].lower()
     if (
-        ext not in [".jpg", ".jpeg", ".png", ".webp"]
+        ext not in [".jpg", ".jpeg", ".png", ".webp", ".avif"]
         or content_type not in allowed_types
     ):
         raise HTTPException(
             status_code=400,
-            detail="Only JPEG, PNG, and WebP images are supported",
+            detail="Only JPEG, PNG, WebP, and AVIF images are supported",
         )
 
     # Read content once; check size; reuse the bytes below
@@ -220,6 +232,7 @@ async def upload_site_image(
                     site_content.about_image_path_3 = None
 
                 await db.commit()
+                await cache_invalidate("site_content")
                 return {
                     "detail": "Image uploaded to Cloudinary successfully",
                     "image_url": secure_url,
@@ -258,6 +271,7 @@ async def upload_site_image(
             ret_path = site_content.about_image_path_3
 
         await db.commit()
+        await cache_invalidate("site_content")
 
         return {
             "detail": "Image uploaded successfully to local storage",

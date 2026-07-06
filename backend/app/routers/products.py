@@ -190,15 +190,15 @@ async def admin_upload_image(
         raise HTTPException(status_code=404, detail="Product not found")
 
     content_type = file.content_type or ""
-    allowed_types = ["image/jpeg", "image/png", "image/webp"]
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/avif"]
     ext = os.path.splitext(file.filename)[1].lower()
     if (
-        ext not in [".jpg", ".jpeg", ".png", ".webp"]
+        ext not in [".jpg", ".jpeg", ".png", ".webp", ".avif"]
         or content_type not in allowed_types
     ):
         raise HTTPException(
             status_code=400,
-            detail="Only JPEG, PNG, and WebP images are supported",
+            detail="Only JPEG, PNG, WebP, and AVIF images are supported",
         )
 
     try:

@@ -1,7 +1,24 @@
+(security_headers) {
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https: wss:;"
+        Cross-Origin-Opener-Policy "same-origin"
+        Cross-Origin-Resource-Policy "same-origin"
+        -Server
+        -X-Powered-By
+    }
+}
+
 luxeshake-api.mandell.tech {
+    import security_headers
     reverse_proxy api:8000
 }
 
 luxeshake.mandell.tech {
+    import security_headers
     reverse_proxy web:3000
 }

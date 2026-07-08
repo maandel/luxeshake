@@ -110,7 +110,10 @@ async def initialize_payment(
             )
             resp_data = resp.json()
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to initialize payment gateway: {str(e)}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to initialize payment gateway: {str(e)}")
+            raise HTTPException(status_code=500, detail="Failed to initialize payment gateway")
 
     if not resp_data.get("status"):
         raise HTTPException(
@@ -184,7 +187,10 @@ async def verify_payment(
             )
             resp_data = resp.json()
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to verify payment gateway: {str(e)}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to verify payment gateway: {str(e)}")
+            raise HTTPException(status_code=500, detail="Failed to verify payment gateway")
 
     if not resp_data.get("status"):
         raise HTTPException(status_code=400, detail="Paystack verification request failed")

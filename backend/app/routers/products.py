@@ -258,9 +258,12 @@ async def admin_upload_image(
                     cloudinary_url, data=data, files=files, timeout=30.0
                 )
                 if resp.status_code not in [200, 201]:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error("Cloudinary upload failed: %s", resp.text)
                     raise HTTPException(
                         status_code=500,
-                        detail=f"Cloudinary upload failed: {resp.text}",  # noqa: E501
+                        detail="Cloudinary upload failed",
                     )
                 resp_json = resp.json()
                 secure_url = resp_json.get("secure_url")
@@ -273,9 +276,12 @@ async def admin_upload_image(
                     "image_url": secure_url,
                 }
             except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.exception("Cloudinary HTTP exception: %s", e)
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Cloudinary HTTP exception: {str(e)}",  # noqa: E501
+                    detail="Cloudinary upload error",
                 )
     else:
         prod_upload_dir = os.path.join(settings.UPLOAD_DIR, str(product.id))

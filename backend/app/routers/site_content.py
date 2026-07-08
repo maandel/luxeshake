@@ -211,9 +211,10 @@ async def upload_site_image(
                     cloudinary_url, data=data, files=files, timeout=30.0
                 )
                 if resp.status_code not in [200, 201]:
+                    logger.error("Cloudinary upload failed: %s", resp.text)
                     raise HTTPException(
                         status_code=500,
-                        detail=f"Cloudinary upload failed: {resp.text}",  # noqa: E501
+                        detail="Cloudinary upload failed",
                     )
                 resp_json = resp.json()
                 secure_url = resp_json.get("secure_url")
@@ -243,7 +244,7 @@ async def upload_site_image(
                 logger.exception("Cloudinary upload failed: %s", e)
                 raise HTTPException(
                     status_code=500,
-                    detail=f"Cloudinary upload error: {str(e)}",
+                    detail="Cloudinary upload error",
                 )
     else:
         site_upload_dir = os.path.join(settings.UPLOAD_DIR, "site_content")

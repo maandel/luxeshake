@@ -132,9 +132,8 @@ class EmailService:
         if not EmailService._is_configured():
             logger.warning(
                 f"Email service not configured. Password Reset OTP to {email} "
-                f"was not sent. OTP: {otp}"
+                f"was not sent."
             )
-            print(f"\n[EMAIL MOCK] Password Reset OTP for {email}: {otp}\n")
             return
 
         if settings.BREVO_API_KEY:
@@ -622,11 +621,6 @@ class EmailService:
             logger.warning(
                 f"Email service not configured. Admin Password Reset email to "
                 f"{email} was not sent."
-            )
-            print(
-                f"\n[EMAIL MOCK] Admin Password Reset for {email}: "
-                f"Temp Password: {temp_password} "
-                f"(Login Link: {login_link})\n"
             )
             return
 

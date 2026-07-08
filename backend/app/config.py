@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     )
 
     APP_NAME: str = "LuxeShake"
-    SECRET_KEY: str = "luxe_shake_super_secret_key_1234567890_change_me"
+    SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     ALGORITHM: str = "HS256"

@@ -401,6 +401,7 @@ async def google_auth(
         user = result_email.scalars().first()
         if user:
             user.google_id = google_id
+            user.is_email_verified = True
         else:
             user = User(
                 email=email,

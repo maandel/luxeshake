@@ -100,6 +100,18 @@ export default function RegisterPage() {
     }
   };
 
+  const handleResendVerification = async () => {
+    setLoading(true);
+    try {
+      await api.post('/auth/resend-verification', { email });
+      showToast('A new verification link has been sent to your email.', 'success');
+    } catch (err: any) {
+      showToast(err.response?.data?.detail || 'Failed to send verification link.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <style>{`
@@ -505,6 +517,16 @@ export default function RegisterPage() {
                 <Link href="/login" className="auth-btn-go-login">
                   Go to Login →
                 </Link>
+                <div style={{ marginTop: '1.5rem' }}>
+                  <button 
+                    type="button" 
+                    onClick={handleResendVerification}
+                    disabled={loading}
+                    style={{ background: 'transparent', color: '#d4af37', border: '1px solid #d4af37', borderRadius: '8px', padding: '0.6rem 1rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}
+                  >
+                    Didn't receive the email? Resend Link
+                  </button>
+                </div>
               </div>
             </div>
 

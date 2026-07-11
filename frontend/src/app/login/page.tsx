@@ -26,6 +26,7 @@ export default function LoginPage() {
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [showForgot, setShowForgot] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -103,7 +104,26 @@ export default function LoginPage() {
         router.push(targetUrl);
       }, 800);
     } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Incorrect email or password.', 'error');
+      if (err.response?.data?.detail?.code === 'UNVERIFIED_EMAIL') {
+        showToast(err.response.data.detail.msg, 'error');
+        setUnverifiedEmail(email);
+      } else {
+        showToast(err.response?.data?.detail || 'Incorrect email or password.', 'error');
+        setUnverifiedEmail('');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setLoading(true);
+    try {
+      await api.post('/auth/resend-verification', { email: unverifiedEmail });
+      showToast('A new verification link has been sent to your email.', 'success');
+      setUnverifiedEmail('');
+    } catch (err: any) {
+      showToast(err.response?.data?.detail || 'Failed to send verification link.', 'error');
     } finally {
       setLoading(false);
     }
@@ -596,6 +616,23 @@ export default function LoginPage() {
                     {loading && <span className="auth-spinner" />}
                     Log In
                   </button>
+                  
+                  {unverifiedEmail && (
+                    <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                      <p style={{ color: '#d0c5af', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                        Didn't receive it?
+                      </p>
+                      <button 
+                        type="button" 
+                        onClick={handleResendVerification}
+                        className="auth-btn-secondary" 
+                        disabled={loading}
+                        style={{ width: '100%', padding: '0.75rem', background: 'transparent', color: '#d4af37', border: '1px solid #d4af37', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        Resend Link Manually
+                      </button>
+                    </div>
+                  )}
                 </form>
 
                 <div className="auth-divider">

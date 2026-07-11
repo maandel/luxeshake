@@ -11,6 +11,7 @@ from app.schemas.auth import (
     OTPRequest,
     OTPVerifyRequest,
     PasswordResetRequest,
+    ResendVerificationRequest,
     Token,
 )
 from app.schemas.user import UserCreate, UserResponse
@@ -104,6 +105,7 @@ async def register(
 async def login(
     login_in: LoginRequest,
     response: Response,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     email_normalized = login_in.email.lower().strip()
@@ -129,6 +131,22 @@ async def login(
         raise HTTPException(
             status_code=400,
             detail="User account is deactivated",
+        )
+
+    if not user.is_email_verified:
+        user.email_verification_token = str(uuid.uuid4())
+        await db.commit()
+        background_tasks.add_task(
+            EmailService.send_verification_email,
+            email=user.email,
+            token=user.email_verification_token,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "msg": "Email not verified. We've automatically sent a new verification link to your email.",
+                "code": "UNVERIFIED_EMAIL",
+            },
         )
 
     user.last_login = datetime.now(UTC)
@@ -228,6 +246,34 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     return {"detail": "Email verified successfully"}
+
+
+@router.post("/resend-verification")
+async def resend_verification(
+    req: ResendVerificationRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    email_normalized = req.email.lower().strip()
+    from sqlalchemy import func
+
+    result = await db.execute(
+        select(User).where(func.lower(User.email) == email_normalized)
+    )
+    user = result.scalars().first()
+
+    if user and not user.is_email_verified:
+        user.email_verification_token = str(uuid.uuid4())
+        await db.commit()
+        background_tasks.add_task(
+            EmailService.send_verification_email,
+            email=user.email,
+            token=user.email_verification_token,
+        )
+
+    return {
+        "detail": "If your email is registered and unverified, a new verification link has been sent."
+    }
 
 
 @router.post("/forgot-password-request")

@@ -47,7 +47,7 @@ const CSP = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paystack.co https://accounts.google.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://res.cloudinary.com",
+  `img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com ${apiUrl}`,
   `connect-src 'self' ${apiUrl} https://api.paystack.co https://accounts.google.com`,
   "frame-src https://accounts.google.com",
   "frame-ancestors 'none'",
@@ -66,6 +66,23 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+      }
+    ],
+  },
   async headers() {
     return [
       {

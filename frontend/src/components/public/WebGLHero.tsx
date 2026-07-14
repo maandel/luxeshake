@@ -2,7 +2,7 @@
 
 import React, { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, Float, PresentationControls, ContactShadows } from "@react-three/drei";
+import { Environment, Float, PresentationControls, ContactShadows, Lightformer } from "@react-three/drei";
 import * as THREE from "three";
 
 // A placeholder for our realistic 3D beverage model
@@ -67,7 +67,14 @@ export const WebGLHero: React.FC = () => {
         </PresentationControls>
 
         <ContactShadows position={[0, -2, 0]} opacity={0.4} scale={20} blur={2} far={4} />
-        <Environment preset="city" />
+        <Environment resolution={256}>
+          <group rotation={[-Math.PI / 4, -0.3, 0]}>
+            <Lightformer intensity={4} rotation-x={Math.PI / 2} position={[0, 5, -9]} scale={[10, 10, 1]} />
+            <Lightformer intensity={2} rotation-y={Math.PI / 2} position={[-5, 1, -1]} scale={[20, 0.1, 1]} />
+            <Lightformer rotation-y={Math.PI / 2} position={[-5, -1, -1]} scale={[20, 0.5, 1]} />
+            <Lightformer rotation-y={-Math.PI / 2} position={[10, 1, 0]} scale={[20, 1, 1]} />
+          </group>
+        </Environment>
       </Canvas>
     </div>
   );

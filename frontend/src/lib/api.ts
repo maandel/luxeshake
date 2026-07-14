@@ -3,7 +3,6 @@ import { useAuthStore } from './store/authStore';
 
 let rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 if (!rawBaseUrl.endsWith('/api/v1')) {
-  // Ensure we don't have double trailing slashes
   rawBaseUrl = `${rawBaseUrl.replace(/\/$/, '')}/api/v1`;
 }
 
@@ -14,7 +13,24 @@ export const api = axios.create({
   withCredentials: true, // Required for HttpOnly refresh token cookies
 });
 
-// Request interceptor to inject JWT access token
+// --- Refresh-lock to prevent concurrent token refresh race conditions ---
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+function subscribeTokenRefresh(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
+function onRefreshSuccess(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
+function onRefreshFailure() {
+  refreshSubscribers = [];
+}
+
+// Request interceptor — inject JWT access token from in-memory store
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken;
@@ -26,38 +42,57 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle token refresh on 401
+// Response interceptor — silent token refresh on 401 with request queuing
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        // Attempt to exchange refresh token cookie for new access token
-        const resp = await axios.post(
-          `${API_BASE_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
-        const { access_token, role } = resp.data;
-        
-        // Update Zustand store
-        useAuthStore.getState().setAuth(access_token, role);
-        
-        // Retry original request
-        originalRequest.headers.Authorization = `Bearer ${access_token}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        // Clear auth state if refresh fails
-        useAuthStore.getState().clearAuth();
-        // Force redirect to login if on an admin portal page
-        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/luxe-control') && window.location.pathname !== '/luxe-control') {
-          window.location.href = '/luxe-control';
-        }
-        return Promise.reject(refreshError);
-      }
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    if (isRefreshing) {
+      // Queue this request until the ongoing refresh completes
+      return new Promise((resolve) => {
+        subscribeTokenRefresh((newToken: string) => {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          originalRequest._retry = true;
+          resolve(api(originalRequest));
+        });
+      });
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    try {
+      const resp = await axios.post(
+        `${API_BASE_URL}/auth/refresh`,
+        {},
+        { withCredentials: true }
+      );
+      const { access_token, role } = resp.data;
+
+      useAuthStore.getState().setAuth(access_token, role);
+      onRefreshSuccess(access_token);
+
+      originalRequest.headers.Authorization = `Bearer ${access_token}`;
+      return api(originalRequest);
+    } catch (refreshError) {
+      onRefreshFailure();
+      useAuthStore.getState().clearAuth();
+      // Only redirect if on a protected admin page
+      if (
+        typeof window !== 'undefined' &&
+        window.location.pathname.startsWith('/luxe-control') &&
+        window.location.pathname !== '/luxe-control'
+      ) {
+        window.location.href = '/luxe-control';
+      }
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
   }
 );
+

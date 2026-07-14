@@ -23,7 +23,7 @@ async def list_delivery_areas(response: Response, db: AsyncSession = Depends(get
         return cached
     result = await db.execute(
         select(DeliveryArea)
-        .where(DeliveryArea.is_active == True)
+        .where(DeliveryArea.is_active)
         .order_by(DeliveryArea.sort_order)
     )
     areas = result.scalars().all()

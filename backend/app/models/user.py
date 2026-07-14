@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 
 from app.database import Base
-from sqlalchemy import Boolean, DateTime, Enum, String
+from sqlalchemy import Boolean, DateTime, Enum, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -34,12 +34,15 @@ class User(Base):
     is_email_verified: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False
     )
+    # Indexed for fast lookup during email verification flow
     email_verification_token: Mapped[str | None] = mapped_column(
-        String(255), nullable=True
+        String(255), nullable=True, index=True
     )
+    # Stores SHA-256 hex digest of OTP (not plaintext)
     password_reset_otp: Mapped[str | None] = mapped_column(
-        String(6),
+        String(64),  # SHA-256 hex = 64 chars
         nullable=True,
+        index=True,
     )
     password_reset_otp_expires: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
@@ -62,3 +65,10 @@ class User(Base):
         onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
+    # Soft delete — preserves referential integrity for orders/transactions
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    # Composite index for soft-delete queries
+    __table_args__ = (Index("ix_users_active_email", "email", "deleted_at"),)

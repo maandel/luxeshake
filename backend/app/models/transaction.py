@@ -1,5 +1,9 @@
 import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.order import Order
 
 from app.database import Base
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String

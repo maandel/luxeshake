@@ -2,19 +2,30 @@ import csv
 import io
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Annotated
+from typing import Annotated, Any
 
+from app.core.audit import (
+    DATA_EXPORT,
+    ROLE_CHANGED,
+    USER_CREATED_BY_ADMIN,
+    USER_DEACTIVATED,
+    USER_DELETED,
+    audit,
+)
+from app.core.logging import get_logger
 from app.database import get_db
 from app.dependencies.auth_deps import (
     require_manager_or_above,
     require_superadmin,
 )
+from app.models.audit_log import AuditLog
 from app.models.order import Order
 from app.models.store_settings import StoreSettings
 from app.models.user import User
+from app.schemas.audit import AuditLogResponse
 from app.schemas.order import StoreSettingsResponse, StoreSettingsUpdate
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
-from app.services.cache import cache_get, cache_set, cache_invalidate
+from app.services.cache import cache_get, cache_invalidate, cache_set
 from app.services.email_service import EmailService
 from app.utils.security import get_password_hash
 from fastapi import (
@@ -23,6 +34,7 @@ from fastapi import (
     Depends,
     HTTPException,
     Query,
+    Request,
     status,
 )
 from fastapi.responses import StreamingResponse
@@ -30,7 +42,36 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+logger = get_logger(__name__)
 router = APIRouter(prefix="/admin", tags=["Admin Management"])
+
+
+@router.get("/audit-logs", response_model=dict[str, Any])
+async def list_audit_logs(
+    superadmin: Annotated[User, Depends(require_superadmin)],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+    action: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    offset = (page - 1) * page_size
+    query = select(AuditLog).order_by(AuditLog.created_at.desc())
+
+    if action:
+        query = query.where(AuditLog.action == action)
+
+    count_res = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_res.scalar() or 0
+
+    result = await db.execute(query.offset(offset).limit(page_size))
+    logs = result.scalars().all()
+
+    return {
+        "items": [AuditLogResponse.model_validate(log) for log in logs],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 
 @router.get("/users", response_model=list[UserResponse])
@@ -53,6 +94,7 @@ async def list_users(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_admin_user(
+    request: Request,
     user_in: UserCreate,
     superadmin: Annotated[User, Depends(require_superadmin)],
     db: AsyncSession = Depends(get_db),
@@ -70,6 +112,15 @@ async def create_admin_user(
         is_active=True,
     )
     db.add(new_user)
+    await db.flush()
+    await audit(
+        db,
+        USER_CREATED_BY_ADMIN,
+        user_id=superadmin.id,
+        resource="user",
+        resource_id=str(new_user.id),
+        ip_address=request.client.host if request.client else None,
+    )
     await db.commit()
     await db.refresh(new_user)
     return new_user
@@ -114,6 +165,7 @@ async def update_user_detail(
 async def change_user_role(
     id: uuid.UUID,
     role: str,
+    request: Request,
     superadmin: Annotated[User, Depends(require_superadmin)],
     db: AsyncSession = Depends(get_db),
 ):
@@ -125,7 +177,17 @@ async def change_user_role(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    old_role = user.role
     user.role = role
+    await audit(
+        db,
+        ROLE_CHANGED,
+        user_id=superadmin.id,
+        resource="user",
+        resource_id=str(id),
+        ip_address=request.client.host if request.client else None,
+        metadata={"old_role": old_role, "new_role": role},
+    )
     await db.commit()
     await db.refresh(user)
     return user
@@ -134,6 +196,7 @@ async def change_user_role(
 @router.patch("/users/{id}/deactivate", response_model=UserResponse)
 async def toggle_user_activation(
     id: uuid.UUID,
+    request: Request,
     superadmin: Annotated[User, Depends(require_superadmin)],
     db: AsyncSession = Depends(get_db),
 ):
@@ -149,6 +212,15 @@ async def toggle_user_activation(
         )
 
     user.is_active = not user.is_active
+    await audit(
+        db,
+        USER_DEACTIVATED,
+        user_id=superadmin.id,
+        resource="user",
+        resource_id=str(id),
+        ip_address=request.client.host if request.client else None,
+        metadata={"is_active": user.is_active},
+    )
     await db.commit()
     await db.refresh(user)
     return user
@@ -157,6 +229,7 @@ async def toggle_user_activation(
 @router.delete("/users/{id}")
 async def delete_user(
     id: uuid.UUID,
+    request: Request,
     superadmin: Annotated[User, Depends(require_superadmin)],
     db: AsyncSession = Depends(get_db),
 ):
@@ -168,9 +241,19 @@ async def delete_user(
     if user.id == superadmin.id:
         raise HTTPException(status_code=400, detail="Cannot delete yourself")
 
-    await db.delete(user)
+    # Soft delete — preserves referential integrity for orders and transactions
+    user.deleted_at = datetime.now(UTC)
+    user.is_active = False
+    await audit(
+        db,
+        USER_DELETED,
+        user_id=superadmin.id,
+        resource="user",
+        resource_id=str(id),
+        ip_address=request.client.host if request.client else None,
+    )
     await db.commit()
-    return {"detail": "User hard deleted successfully"}
+    return {"detail": "User soft-deleted successfully"}
 
 
 @router.post("/users/{id}/reset-password")
@@ -317,6 +400,7 @@ async def get_revenue_chart(
 
 @router.get("/analytics/export")
 async def export_orders_csv(
+    request: Request,
     manager: Annotated[User, Depends(require_manager_or_above)],
     db: AsyncSession = Depends(get_db),
 ):
@@ -326,6 +410,15 @@ async def export_orders_csv(
         .order_by(Order.created_at.desc())
     )
     orders = result.scalars().all()
+
+    await audit(
+        db,
+        DATA_EXPORT,
+        user_id=manager.id,
+        ip_address=request.client.host if request.client else None,
+        metadata={"export_type": "orders_csv", "count": len(orders)},
+    )
+    await db.commit()
 
     output = io.StringIO()
     writer = csv.writer(output)

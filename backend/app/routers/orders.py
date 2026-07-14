@@ -1,7 +1,6 @@
 import logging
 import secrets
 import uuid
-from datetime import UTC, datetime
 from typing import Annotated
 
 from app.database import get_db
@@ -291,6 +290,22 @@ async def admin_list_orders(
     status: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
+    _VALID_STATUSES = {
+        "pending",
+        "confirmed",
+        "processing",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+    }
+    if status and status not in _VALID_STATUSES:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid status. Must be one of: {', '.join(sorted(_VALID_STATUSES))}",
+        )
+
     offset = (page - 1) * page_size
     query = select(Order).order_by(Order.created_at.desc())
     if status:

@@ -1,3 +1,4 @@
+import secrets
 from typing import Annotated
 
 from app.database import get_db
@@ -8,8 +9,12 @@ from app.dependencies.auth_deps import (
 from app.models.user import User
 from app.schemas.user import PasswordUpdate, UserResponse, UserUpdate
 from app.utils.security import get_password_hash, verify_password
-from fastapi import APIRouter, Depends, HTTPException, status
+from app.services.email_service import EmailService
+from app.core.logging import get_logger, mask_email
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -28,12 +33,30 @@ async def get_me(
 async def update_me(
     update_in: UserUpdate,
     current_user: Annotated[User, Depends(get_current_active_user)],
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     if update_in.full_name is not None:
         current_user.full_name = update_in.full_name
+
     if update_in.email is not None:
-        current_user.email = update_in.email
+        new_email = update_in.email.lower().strip()
+        if new_email != current_user.email.lower():
+            # Email change requires re-verification to prevent account takeover
+            current_user.email = new_email
+            current_user.is_email_verified = False
+            verification_token = secrets.token_urlsafe(32)
+            current_user.email_verification_token = verification_token
+            logger.info(
+                "email_change_initiated",
+                user_id=str(current_user.id),
+                new_email=mask_email(new_email),
+            )
+            background_tasks.add_task(
+                EmailService.send_verification_email,
+                email=new_email,
+                token=verification_token,
+            )
 
     await db.commit()
     await db.refresh(current_user)

@@ -72,8 +72,10 @@ export default function OrderTrackingPage() {
 
   useEffect(() => {
     if (orderNumber) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchOrder();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderNumber]);
 
   // Helper to map status to step indicator index
@@ -185,7 +187,7 @@ export default function OrderTrackingPage() {
           <div className="track-error-card">
             <h2 className="track-error-title">Order Not Found</h2>
             <p className="track-error-desc">
-              We couldn't locate any order with the tracking number: <strong style={{ color: '#f2ca50' }}>{orderNumber}</strong>. Please check the spelling and try again.
+              We couldn&apos;t locate any order with the tracking number: <strong style={{ color: '#f2ca50' }}>{orderNumber}</strong>. Please check the spelling and try again.
             </p>
             <Link href="/track" className="track-btn-primary">
               Try Another Number

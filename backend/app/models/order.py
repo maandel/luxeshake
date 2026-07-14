@@ -1,5 +1,9 @@
 import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.transaction import Transaction
 
 from app.database import Base
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String
@@ -57,9 +61,7 @@ class Order(Base):
     paystack_reference: Mapped[str | None] = mapped_column(
         String(255), index=True, nullable=True
     )
-    driver_phone: Mapped[str | None] = mapped_column(
-        String(50), nullable=True
-    )
+    driver_phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False

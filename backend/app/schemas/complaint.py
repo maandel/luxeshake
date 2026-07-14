@@ -72,12 +72,8 @@ class ComplaintResponse(BaseModel):
 
 
 class ComplaintStatusUpdate(BaseModel):
-    status: str = Field(
-        ..., pattern="^(open|in_progress|resolved|closed)$"
-    )
-    priority: str | None = Field(
-        None, pattern="^(low|medium|high|critical)$"
-    )
+    status: str = Field(..., pattern="^(open|in_progress|resolved|closed)$")
+    priority: str | None = Field(None, pattern="^(low|medium|high|critical)$")
 
 
 class ComplaintAssignRequest(BaseModel):

@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 import uuid
 
+
 class SiteContentBase(BaseModel):
     hero_title: str
     hero_subtitle: str
@@ -26,6 +27,7 @@ class SiteContentBase(BaseModel):
 
 class SiteContentUpdate(BaseModel):
     """All fields optional — only fields sent in the request body will be updated."""
+
     hero_title: Optional[str] = None
     hero_subtitle: Optional[str] = None
     about_title: Optional[str] = None

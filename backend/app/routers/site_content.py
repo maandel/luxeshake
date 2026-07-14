@@ -56,9 +56,10 @@ ALL_RESPONSE_FIELDS = list(DEFAULTS.keys())
 
 
 @router.get("", response_model=SiteContentResponse)
-async def get_site_content(response: Any = None, db: AsyncSession = Depends(get_db)) -> Any:
+async def get_site_content(
+    response: Any = None, db: AsyncSession = Depends(get_db)
+) -> Any:
     import uuid as _uuid
-    from fastapi import Response as _Response
 
     cached = await cache_get("site_content")
     if cached is not None:

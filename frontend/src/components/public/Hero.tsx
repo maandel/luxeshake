@@ -2,16 +2,18 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export const Hero: React.FC = () => {
   return (
     <section className="relative h-screen flex items-center overflow-hidden pt-20" id="home">
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-r from-cacao-black via-cacao-black/80 to-transparent z-10"></div>
-        <img 
+        <Image 
           alt="LuxeShake Signature Drink" 
-          className="w-full h-full object-cover" 
+          className="object-cover" 
           src="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=1600&auto=format&fit=crop"
+          fill
         />
       </div>
       

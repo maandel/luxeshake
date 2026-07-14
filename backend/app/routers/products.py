@@ -31,6 +31,38 @@ router = APIRouter(tags=["Products & Categories"])
 _PRODUCTS_TTL = 60
 _CATEGORIES_TTL = 120
 
+# Magic bytes for allowed image types
+_MAGIC_BYTES: dict[str, bytes] = {
+    "jpeg": b"\xff\xd8\xff",
+    "png": b"\x89PNG",
+    "webp": b"RIFF",  # RIFF....WEBP
+    "avif": None,  # AVIF is inside ISO BMFF — no simple magic; rely on extension+content-type
+}
+
+
+def _validate_magic_bytes(header: bytes, declared_content_type: str) -> None:
+    """
+    Validate that the file's magic bytes match the declared content type.
+    Rejects any file whose bytes don't match — prevents polyglot/spoofed uploads.
+    """
+    if declared_content_type in ("image/jpeg",):
+        if not header.startswith(_MAGIC_BYTES["jpeg"]):
+            raise HTTPException(
+                400, "File bytes do not match declared type (expected JPEG)"
+            )
+    elif declared_content_type == "image/png":
+        if not header[:4] == _MAGIC_BYTES["png"]:
+            raise HTTPException(
+                400, "File bytes do not match declared type (expected PNG)"
+            )
+    elif declared_content_type == "image/webp":
+        # WEBP: starts with RIFF + 4-byte size + WEBP
+        if not (header.startswith(_MAGIC_BYTES["webp"]) and header[8:12] == b"WEBP"):
+            raise HTTPException(
+                400, "File bytes do not match declared type (expected WebP)"
+            )
+    # AVIF: complex container, skip magic bytes — rely on extension + content-type allowlist
+
 
 @router.get("/products", response_model=list[ProductResponse])
 async def list_products(
@@ -116,7 +148,7 @@ async def admin_create_product(
     new_product = Product(**product_in.model_dump())
     db.add(new_product)
     await db.commit()
-    
+
     # Refetch with category to satisfy ProductResponse
     result = await db.execute(
         select(Product)
@@ -124,7 +156,7 @@ async def admin_create_product(
         .where(Product.id == new_product.id)
     )
     loaded_product = result.scalars().first()
-    
+
     await cache_invalidate("products:")
     return loaded_product
 
@@ -137,9 +169,7 @@ async def admin_update_product(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(Product)
-        .options(selectinload(Product.category))
-        .where(Product.id == id)
+        select(Product).options(selectinload(Product.category)).where(Product.id == id)
     )
     product = result.scalars().first()
     if not product:
@@ -210,11 +240,18 @@ async def admin_upload_image(
                 status_code=400,
                 detail="File size exceeds maximum limit of 5MB",
             )
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(
             status_code=400,
             detail="Could not determine file size",
         )
+
+    # Validate magic bytes outside size check so errors are clearly reported
+    header = await file.read(12)
+    await file.seek(0)
+    _validate_magic_bytes(header, content_type)
 
     if settings.STORAGE_BACKEND == "cloudinary":
         if not all(
@@ -259,6 +296,7 @@ async def admin_upload_image(
                 )
                 if resp.status_code not in [200, 201]:
                     import logging
+
                     logger = logging.getLogger(__name__)
                     logger.error("Cloudinary upload failed: %s", resp.text)
                     raise HTTPException(
@@ -277,6 +315,7 @@ async def admin_upload_image(
                 }
             except Exception as e:
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.exception("Cloudinary HTTP exception: %s", e)
                 raise HTTPException(

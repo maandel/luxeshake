@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
+
 # Passlib/Bcrypt 4.x compatibility hotfix
 if not hasattr(bcrypt, "__about__"):
     bcrypt.__about__ = bcrypt

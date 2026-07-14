@@ -17,6 +17,7 @@ const NAV_ICONS: Record<string, string> = {
   '/luxe-control/users': 'manage_accounts',
   '/luxe-control/settings': 'settings',
   '/luxe-control/site-content': 'web',
+  '/luxe-control/audit-logs': 'security',
 };
 
 export default function LuxeControlLayout({
@@ -146,6 +147,7 @@ export default function LuxeControlLayout({
     menuItems.push({ label: 'Staff Management', path: '/luxe-control/users' });
     menuItems.push({ label: 'Store Settings', path: '/luxe-control/settings' });
     menuItems.push({ label: 'Site Content', path: '/luxe-control/site-content' });
+    menuItems.push({ label: 'Audit Logs', path: '/luxe-control/audit-logs' });
   }
 
   const roleLabel: Record<string, string> = {

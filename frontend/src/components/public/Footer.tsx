@@ -12,7 +12,7 @@ export const Footer: React.FC = () => {
             LuxeShake
           </div>
           <p className="font-body-md text-body-md text-on-surface-variant max-w-xs text-center md:text-left">
-            The world's most indulgent artisanal creamery experience.
+            The world&apos;s most indulgent artisanal creamery experience.
           </p>
         </div>
         

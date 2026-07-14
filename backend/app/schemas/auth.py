@@ -1,4 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field
+import re
+
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class Token(BaseModel):
@@ -30,6 +32,31 @@ class PasswordResetRequest(BaseModel):
     token: str
     new_password: str = Field(..., min_length=8, max_length=128)
 
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        """Enforce password complexity on reset."""
+        errors = []
+        if not re.search(r"[A-Z]", v):
+            errors.append("one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            errors.append("one lowercase letter")
+        if not re.search(r"\d", v):
+            errors.append("one digit")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+            errors.append("one special character")
+        if errors:
+            raise ValueError(f"Password must contain at least {', '.join(errors)}")
+        return v
+
 
 class ResendVerificationRequest(BaseModel):
     email: EmailStr
+
+
+class GoogleAuthPayload(BaseModel):
+    """Typed payload for Google OAuth — credential is the Google ID Token JWT."""
+
+    credential: str = Field(
+        ..., min_length=50, description="Google ID token from Sign-In button"
+    )

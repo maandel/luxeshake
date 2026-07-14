@@ -94,6 +94,10 @@ Desktop.ini
 *.swp
 *.swo
 
+# Agents & AI Tools
+.agents/
+.github/copilot-instructions.md
+
 # -------------------------------------------------------------------
 # Project Specific Secrets
 # -------------------------------------------------------------------

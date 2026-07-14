@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export const About: React.FC = () => {
   return (
@@ -10,10 +11,11 @@ export const About: React.FC = () => {
         <div className="relative group">
           <div className="absolute -inset-4 border border-gold-leaf/20 translate-x-4 translate-y-4 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform duration-500"></div>
           <div className="relative aspect-video overflow-hidden shadow-2xl">
-            <img 
+            <Image 
               alt="Craftsmanship detail" 
-              className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" 
+              className="object-cover transform group-hover:scale-110 transition-transform duration-700" 
               src="https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=800&auto=format&fit=crop"
+              fill
             />
           </div>
         </div>

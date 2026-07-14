@@ -1,6 +1,8 @@
 from app.database import Base, engine
+from app.models.audit_log import AuditLog  # noqa: F401 — needed for create_all
 from app.models.delivery_area import DeliveryArea
 from app.models.product import Category, Product
+from app.models.refresh_token import RefreshToken  # noqa: F401 — needed for create_all
 from app.models.site_content import SiteContent
 from app.models.user import User
 from app.utils.security import get_password_hash
@@ -63,7 +65,37 @@ async def init_db():
         )
         await conn.execute(
             text(
-                "ALTER TABLE site_content ADD COLUMN IF NOT EXISTS about_stat_3_label VARCHAR(100) NOT NULL DEFAULT 'Collections';"  # noqa: E501
+                "ALTER TABLE site_content ADD COLUMN IF NOT EXISTS about_stat_3_label VARCHAR(100) NOT NULL DEFAULT 'Collections';"
+            )
+        )
+
+        # ── Security hardening additions (idempotent) ───────────────────────
+        # Add soft-delete column to users
+        await conn.execute(
+            text("ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;")
+        )
+        # Expand password_reset_otp from 6 chars (plaintext) to 64 chars (SHA-256 hex)
+        await conn.execute(
+            text("ALTER TABLE users ALTER COLUMN password_reset_otp TYPE VARCHAR(64);")
+        )
+        # Index on email_verification_token for fast lookup during verification flow
+        await conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_users_email_verification_token "
+                "ON users (email_verification_token) WHERE email_verification_token IS NOT NULL;"
+            )
+        )
+        # Index on password_reset_otp for fast lookup during OTP verification
+        await conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_users_password_reset_otp "
+                "ON users (password_reset_otp) WHERE password_reset_otp IS NOT NULL;"
+            )
+        )
+        # Composite index for soft-delete aware queries (replaces dropped unique on email)
+        await conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_users_active_email ON users (email, deleted_at);"
             )
         )
 

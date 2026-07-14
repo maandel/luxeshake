@@ -8,6 +8,7 @@ export const ThemeToggle: React.FC = () => {
   useEffect(() => {
     // Initial load
     const isLightMode = document.body.classList.contains('light');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLight(isLightMode);
   }, []);
 

@@ -10,6 +10,7 @@ from fastapi_mail import (
     MessageSchema,
     MessageType,
 )
+from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 logger = logging.getLogger("app.email")
 
@@ -65,12 +66,21 @@ class EmailService:
 
         async with httpx.AsyncClient() as client:
             try:
-                resp = await client.post(
-                    url,
-                    headers=headers,
-                    json=data,
-                    timeout=10.0,
-                )
+                async for attempt in AsyncRetrying(
+                    wait=wait_exponential(multiplier=1, min=2, max=10),
+                    stop=stop_after_attempt(3),
+                    retry=retry_if_exception_type((httpx.RequestError, httpx.TimeoutException)),
+                    reraise=True,
+                ):
+                    with attempt:
+                        resp = await client.post(
+                            url,
+                            headers=headers,
+                            json=data,
+                            timeout=10.0,
+                        )
+                        resp.raise_for_status()
+
                 if resp.status_code in [200, 201, 202]:
                     logger.info(
                         f"Email sent successfully to {email} via Brevo HTTP API."  # noqa: E501

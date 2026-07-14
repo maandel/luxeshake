@@ -8,6 +8,7 @@ from app.models.order import Order, OrderItem
 from app.models.transaction import Transaction
 from app.models.complaint import Complaint, TicketMessage
 from app.models.site_content import SiteContent
+from app.models.idempotency import IdempotencyKey
 
 __all__ = [
     "Base",
@@ -23,4 +24,5 @@ __all__ = [
     "Complaint",
     "TicketMessage",
     "SiteContent",
+    "IdempotencyKey",
 ]

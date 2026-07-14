@@ -16,13 +16,16 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import IntegrityError
 import httpx
+from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from app.database import get_db
 from app.config import settings
 from app.models.user import User
 from app.models.order import Order
 from app.models.transaction import Transaction
+from app.models.idempotency import IdempotencyKey
 from app.services.email_service import EmailService
 from app.dependencies.auth_deps import get_optional_user, require_manager_or_above
 from app.core.logging import get_logger
@@ -115,12 +118,20 @@ async def initialize_payment(
 
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.post(
-                "https://api.paystack.co/transaction/initialize",
-                headers=headers,
-                json=data,
-                timeout=10.0,
-            )
+            async for attempt in AsyncRetrying(
+                wait=wait_exponential(multiplier=1, min=2, max=10),
+                stop=stop_after_attempt(3),
+                retry=retry_if_exception_type((httpx.RequestError, httpx.TimeoutException)),
+                reraise=True,
+            ):
+                with attempt:
+                    resp = await client.post(
+                        "https://api.paystack.co/transaction/initialize",
+                        headers=headers,
+                        json=data,
+                        timeout=10.0,
+                    )
+                    resp.raise_for_status()
             resp_data = resp.json()
         except Exception as e:
             import logging
@@ -202,11 +213,19 @@ async def verify_payment(
 
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.get(
-                f"https://api.paystack.co/transaction/verify/{reference}",
-                headers=headers,
-                timeout=10.0,
-            )
+            async for attempt in AsyncRetrying(
+                wait=wait_exponential(multiplier=1, min=2, max=10),
+                stop=stop_after_attempt(3),
+                retry=retry_if_exception_type((httpx.RequestError, httpx.TimeoutException)),
+                reraise=True,
+            ):
+                with attempt:
+                    resp = await client.get(
+                        f"https://api.paystack.co/transaction/verify/{reference}",
+                        headers=headers,
+                        timeout=10.0,
+                    )
+                    resp.raise_for_status()
             resp_data = resp.json()
         except Exception as e:
             import logging
@@ -287,6 +306,17 @@ async def paystack_webhook(
     if event == "charge.success":
         data = payload.get("data", {})
         reference = data.get("reference")
+        paystack_id = data.get("id")
+
+        # 4. Idempotency Check
+        idempotency_str = f"paystack_{event}_{paystack_id or reference}"
+        try:
+            db.add(IdempotencyKey(key=idempotency_str))
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+            logger.info("paystack_webhook_idempotency_hit", key=idempotency_str)
+            return {"detail": "Webhook already processed"}
 
         # Fetch transaction by reference
         tx_res = await db.execute(

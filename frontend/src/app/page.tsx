@@ -9,6 +9,9 @@ import { useCartStore } from '../lib/store/cartStore';
 import { api } from '../lib/api';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate, useInView } from 'framer-motion';
+import { UserPlus, ShoppingBag, Menu, X, Coffee, CheckCircle, ShoppingCart, Store, Truck } from 'lucide-react';
+
+const WebGLHero = dynamic(() => import('../components/public/WebGLHero').then(mod => mod.WebGLHero), { ssr: false });
 
 const CartDrawer = dynamic(() => import('../components/public/CartDrawer'), {
   ssr: false,
@@ -150,8 +153,8 @@ function ProductCard({ product }: { product: Product }) {
           onMouseEnter={e => { if (!added) { (e.currentTarget as HTMLButtonElement).style.background = '#d4af37'; (e.currentTarget as HTMLButtonElement).style.color = '#1A0F0A'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 16px rgba(212,175,55,0.3)'; } }}
           onMouseLeave={e => { if (!added) { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(212,175,55,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = '#d4af37'; (e.currentTarget as HTMLButtonElement).style.boxShadow = 'none'; } }}
         >
-          <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: '16px', fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20", lineHeight: 1 }}>
-            {added ? 'check_circle' : 'add_shopping_cart'}
+          <span style={{ display: 'flex', alignItems: 'center' }}>
+            {added ? <CheckCircle size={16} /> : <ShoppingCart size={16} />}
           </span>
           {added ? 'Added to Order' : 'Add to Order'}
         </button>
@@ -271,7 +274,6 @@ function SpaNavbar({ onOpenCart, cartCount }: { onOpenCart: () => void; cartCoun
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;1,400&family=DM+Sans:wght@400;500;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 
         .spa-nav {
           position: fixed; top: 0; left: 0; right: 0; z-index: 100;
@@ -371,9 +373,6 @@ function SpaNavbar({ onOpenCart, cartCount }: { onOpenCart: () => void; cartCoun
           position: relative; background: none; border: none;
           cursor: pointer; padding: 0.3rem;
           color: rgba(234,225,212,0.65);
-          font-family: 'Material Symbols Outlined';
-          font-size: 22px; line-height: 1;
-          font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
           transition: color 0.2s, transform 0.2s;
         }
         .spa-cart-btn:hover { color: #f2ca50; transform: scale(1.1); }
@@ -405,7 +404,6 @@ function SpaNavbar({ onOpenCart, cartCount }: { onOpenCart: () => void; cartCoun
         .spa-hamburger {
           background: none; border: none; cursor: pointer; padding: 0.3rem;
           color: rgba(234,225,212,0.65);
-          font-family: 'Material Symbols Outlined'; font-size: 24px; line-height: 1;
           display: flex; align-items: center;
           transition: color 0.2s;
         }
@@ -485,7 +483,7 @@ function SpaNavbar({ onOpenCart, cartCount }: { onOpenCart: () => void; cartCoun
                 <>
                   <Link href="/login" className="spa-auth-link">Log In</Link>
                   <Link href="/register" className="spa-signup-btn">
-                    <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: '14px', fontVariationSettings: "'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20", lineHeight: 1 }}>person_add</span>
+                    <UserPlus size={16} strokeWidth={2.5} />
                     Sign Up
                   </Link>
                 </>
@@ -494,7 +492,7 @@ function SpaNavbar({ onOpenCart, cartCount }: { onOpenCart: () => void; cartCoun
 
             {/* Cart */}
             <button onClick={onOpenCart} className="spa-cart-btn" aria-label="Open cart">
-              shopping_bag
+              <ShoppingBag size={22} strokeWidth={2} />
               {cartCount > 0 && <span className="spa-cart-badge">{cartCount > 9 ? '9+' : cartCount}</span>}
             </button>
 
@@ -503,7 +501,7 @@ function SpaNavbar({ onOpenCart, cartCount }: { onOpenCart: () => void; cartCoun
 
             {/* Hamburger */}
             <button className="spa-hamburger" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
-              {mobileOpen ? 'close' : 'menu'}
+              {mobileOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
@@ -564,6 +562,10 @@ function HeroSection({ onScrollToMenu, content }: { onScrollToMenu: () => void, 
         {/* Gradient Overlay */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(110deg, rgba(26,15,10,0.95) 0%, rgba(26,15,10,0.65) 55%, rgba(26,15,10,0.2) 100%)', zIndex: 1 }} />
       </div>
+      
+      <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '50%', zIndex: 1 }}>
+        <WebGLHero />
+      </div>
 
       <div style={{ position: 'relative', zIndex: 2, maxWidth: '1200px', margin: '0 auto', padding: '6rem max(5vw, 1.5rem) 4rem', width: '100%' }}>
         <motion.div style={{ maxWidth: '650px' }} variants={containerVariants} initial="hidden" animate="visible">
@@ -587,7 +589,7 @@ function HeroSection({ onScrollToMenu, content }: { onScrollToMenu: () => void, 
               whileHover={{ scale: 1.02, boxShadow: '0 12px 40px rgba(212,175,55,0.5)' }}
               whileTap={{ scale: 0.98 }}
             >
-              <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: '18px', fontVariationSettings: "'FILL' 0, 'wght' 400" }}>local_cafe</span>
+              <Coffee size={18} strokeWidth={2.5} />
               Explore Our Menu
             </motion.button>
             <motion.button
@@ -781,7 +783,9 @@ function LocationsSection({ content }: { content: SiteContentData | null }) {
               onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(212,175,55,0.3)'}
               onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(212,175,55,0.1)'}
             >
-              <span style={{ fontFamily: 'Material Symbols Outlined', fontSize: '28px', color: '#d4af37', display: 'block', marginBottom: '1.25rem', fontVariationSettings: "'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 28" }}>{loc.icon}</span>
+              <span style={{ display: 'flex', marginBottom: '1.25rem', color: '#d4af37' }}>
+                {loc.icon === 'store' ? <Store size={28} /> : <Truck size={28} />}
+              </span>
               <div style={{ fontFamily: "'Libre Caslon Text', serif", fontSize: '1.1rem', color: '#eae1d4', marginBottom: '0.5rem' }}>{loc.name}</div>
               <div style={{ fontSize: '0.82rem', color: '#99907c', lineHeight: 1.6, marginBottom: '0.5rem', fontFamily: "'DM Sans', sans-serif" }}>{loc.address}</div>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', color: '#d4af37', textTransform: 'uppercase', fontFamily: "'DM Sans', sans-serif" }}>{loc.hours}</div>

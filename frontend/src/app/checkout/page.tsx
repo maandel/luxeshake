@@ -6,9 +6,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '../../lib/store/cartStore';
 import { api } from '../../lib/api';
+import { isAxiosError } from 'axios';
 import { useToast } from '../../context/ToastContext';
 import { useAuthStore } from '../../lib/store/authStore';
 import GlobalFooter from '../../components/GlobalFooter';
+import { useMachine } from '@xstate/react';
+import { checkoutMachine } from '../../machines/checkoutMachine';
 
 interface DeliveryArea {
   id: string;
@@ -22,7 +25,8 @@ export default function CheckoutPage() {
   const { showToast } = useToast();
   const { accessToken } = useAuthStore();
 
-  const [step, setStep] = useState<'form' | 'confirm' | 'processing' | 'success' | 'failed'>('form');
+  const [state, send] = useMachine(checkoutMachine);
+  const step = state.value;
   const [deliveryAreas, setDeliveryAreas] = useState<DeliveryArea[]>([]);
   const [existingOrderId, setExistingOrderId] = useState<string | null>(null);
 
@@ -129,11 +133,11 @@ export default function CheckoutPage() {
       showToast('Please provide your delivery address in the instructions box.', 'error');
       return;
     }
-    setStep('confirm');
+    send({ type: 'NEXT_TO_CONFIRM' });
   };
 
   const handleInitializePayment = async () => {
-    setStep('processing');
+    send({ type: 'SUBMIT_PAYMENT' });
     setLoading(true);
     try {
       const orderPayload = {
@@ -173,7 +177,7 @@ export default function CheckoutPage() {
       if (typeof window !== 'undefined' && !(window as any).PaystackPop) {
         showToast('Payment gateway is still loading. Please wait a moment and try again.', 'info');
         setLoading(false);
-        setStep('confirm');
+        send({ type: 'BACK_TO_FORM' }); // Or a new event for returning to confirm
         return;
       }
 
@@ -188,27 +192,28 @@ export default function CheckoutPage() {
         },
         onClose: () => {
           setLoading(false);
-          setStep('confirm');
+          send({ type: 'BACK_TO_FORM' });
           showToast('Payment popup closed.', 'info');
         }
       });
       handler.openIframe();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Checkout error details:', err);
       setLoading(false);
 
-      if (err.response?.data?.detail === 'Order has already been paid') {
+      if (isAxiosError(err) && err.response?.data?.detail === 'Order has already been paid') {
         localStorage.removeItem('luxeshake_pending_order_id');
         setExistingOrderId(null);
         setFinalTotal(total);
         clearCart();
-        setStep('success');
+        send({ type: 'PAYMENT_SUCCESS' });
         showToast('This order has already been paid and confirmed!', 'success');
         return;
       }
 
-      setStep('failed');
-      showToast(err.response?.data?.detail || 'Checkout process failed. Please try again.', 'error');
+      send({ type: 'PAYMENT_FAILED', error: err instanceof Error ? err.message : 'Unknown error' });
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(detail || 'Checkout process failed. Please try again.', 'error');
     }
   };
 
@@ -219,15 +224,15 @@ export default function CheckoutPage() {
         localStorage.removeItem('luxeshake_pending_order_id');
         setExistingOrderId(null);
         setFinalTotal(total);
-        setStep('success');
+        send({ type: 'PAYMENT_SUCCESS' });
         clearCart();
         showToast('Payment received!', 'success');
       } else {
-        setStep('failed');
+        send({ type: 'PAYMENT_FAILED', error: 'Verification failed' });
       }
     } catch (err) {
       console.error('Payment verification error:', err);
-      setStep('failed');
+      send({ type: 'PAYMENT_FAILED', error: 'Error' });
     } finally {
       setLoading(false);
     }
@@ -297,7 +302,7 @@ export default function CheckoutPage() {
             <button className="checkout-btn-primary" onClick={handleInitializePayment}>
               Try Again
             </button>
-            <button className="checkout-btn-secondary" onClick={() => setStep('confirm')}>
+            <button className="checkout-btn-secondary" onClick={() => send({ type: 'BACK_TO_FORM' })}>
               Back to Confirmation
             </button>
           </div>

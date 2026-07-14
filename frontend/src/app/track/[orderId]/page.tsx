@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api } from '../../../lib/api';
 import { useToast } from '../../../context/ToastContext';
+import { isAxiosError } from 'axios';
 import GlobalFooter from '../../../components/GlobalFooter';
 
 interface OrderItem {
@@ -63,8 +64,9 @@ export default function OrderTrackingPage() {
       setLoading(true);
       const resp = await api.get(`/orders/track/${orderNumber}`);
       setOrder(resp.data);
-    } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Order tracking number not found.', 'error');
+    } catch (err: unknown) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(detail || 'Order tracking number not found.', 'error');
     } finally {
       setLoading(false);
     }

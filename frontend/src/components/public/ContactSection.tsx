@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { isAxiosError } from 'axios';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
 
@@ -46,7 +48,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
 
     setLoading(true);
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         submitter_name: name,
         submitter_email: email,
         submitter_phone: phone || null,
@@ -69,9 +71,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       setSubject('');
       setMessage('');
       setOrderId('');
-    } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Failed to submit support ticket. Please try again.';
-      showToast(msg, 'error');
+    } catch (err: unknown) {
+      const msg = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(msg || 'Failed to submit support ticket. Please try again.', 'error');
     } finally {
       setLoading(false);
     }

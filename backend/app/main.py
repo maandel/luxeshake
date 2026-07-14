@@ -31,6 +31,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from sqlalchemy import text
+import socketio
 
 # Configure structured logging before everything else
 configure_logging()
@@ -66,6 +67,23 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url=None,
 )
+
+# --- Socket.IO Real-time Engine ---
+sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+socket_app = socketio.ASGIApp(sio)
+app.mount("/socket.io", socket_app)
+
+
+@sio.event
+async def connect(sid, environ):
+    # Log connection or authenticate
+    pass
+
+
+@sio.event
+async def disconnect(sid):
+    pass
+
 
 # --- Rate limiting ---
 limiter = Limiter(key_func=get_remote_address)

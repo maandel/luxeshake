@@ -16,8 +16,46 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'LuxeShake',
-  description: '',
+  title: 'LuxeShake - Premium Milkshakes & Parfaits',
+  description: 'Experience the finest handcrafted milkshakes, smoothies, and parfaits. Luxury in every sip.',
+  openGraph: {
+    title: 'LuxeShake',
+    description: 'Experience the finest handcrafted milkshakes, smoothies, and parfaits. Luxury in every sip.',
+    url: 'https://luxeshake.com',
+    siteName: 'LuxeShake',
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'LuxeShake Premium Milkshakes',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'LuxeShake',
+    description: 'Experience the finest handcrafted milkshakes, smoothies, and parfaits.',
+  },
+};
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Restaurant',
+  name: 'LuxeShake',
+  image: 'https://luxeshake.com/og-image.jpg',
+  description: 'Premium milkshakes, smoothies, and parfaits.',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'LuxeShake Lounge',
+    addressLocality: 'Enugu',
+    addressRegion: 'EN',
+    addressCountry: 'NG'
+  },
+  servesCuisine: 'Desserts, Milkshakes, Smoothies',
+  priceRange: '$$',
 };
 
 export default function RootLayout({
@@ -34,6 +72,10 @@ export default function RootLayout({
       <body className="font-body-md selection:bg-gold-leaf selection:text-cacao-black antialiased" suppressHydrationWarning>
         <ToastProvider>
           {children}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
         </ToastProvider>
       </body>
     </html>

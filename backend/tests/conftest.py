@@ -15,6 +15,7 @@ TestingSessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
+
 @pytest.fixture(scope="session", autouse=True)
 async def setup_test_db():
     async with engine.begin() as conn:
@@ -23,10 +24,12 @@ async def setup_test_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
+
 @pytest.fixture
 async def db_session() -> AsyncSession:
     async with TestingSessionLocal() as session:
         yield session
+
 
 @pytest.fixture
 async def async_client(db_session: AsyncSession):

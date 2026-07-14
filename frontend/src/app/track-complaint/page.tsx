@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { api } from '../../lib/api';
 import { useToast } from '../../context/ToastContext';
+import { isAxiosError } from 'axios';
 import GlobalFooter from '../../components/GlobalFooter';
 
 interface TicketMessage {
@@ -50,8 +51,9 @@ export default function TrackComplaintPage() {
       });
       setTicket(resp.data);
       showToast('Ticket found.', 'success');
-    } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Ticket not found or email mismatch.', 'error');
+    } catch (err: unknown) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(detail || 'Ticket not found or email mismatch.', 'error');
       setTicket(null);
     } finally {
       setLoading(false);

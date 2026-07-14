@@ -100,6 +100,17 @@
   --spacing-section-gap: 120px;
 }
 
+@layer base {
+  /* Enforce 44x44px minimum touch targets globally for mobile-first UX */
+  button, 
+  [role="button"],
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
 @layer utilities {
   .glass-card {
     background: rgba(45, 27, 20, 0.4);

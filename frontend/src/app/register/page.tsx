@@ -7,6 +7,9 @@ import { api } from '../../lib/api';
 import { useAuthStore } from '../../lib/store/authStore';
 import { useToast } from '../../context/ToastContext';
 import GlobalFooter from '../../components/GlobalFooter';
+import { useMachine } from '@xstate/react';
+import { authMachine } from '../../machines/authMachine';
+import { isAxiosError } from 'axios';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -15,15 +18,36 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleBtnReady, setGoogleBtnReady] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+
+  const [state, send] = useMachine(authMachine);
+  const loading = state.matches('loading');
+  const success = state.matches('success');
 
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
   const { showToast } = useToast();
+
+  const handleGoogleResponse = async (credentialResponse: { credential: string }) => {
+    setGoogleLoading(true);
+    try {
+      const parts = credentialResponse.credential.split('.');
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const { email, sub: google_id, name } = payload;
+      const resp = await api.post('/auth/google', { email, google_id, name });
+      setAuth(resp.data.access_token, resp.data.role);
+      showToast('Account created with Google!', 'success');
+      router.push('/account');
+    } catch (err: unknown) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(detail || 'Google sign-up failed. Please try again.', 'error');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -58,24 +82,8 @@ export default function RegisterPage() {
     script.defer = true;
     script.onload = initGoogleBtn;
     document.body.appendChild(script);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleGoogleResponse = async (credentialResponse: any) => {
-    setGoogleLoading(true);
-    try {
-      const parts = credentialResponse.credential.split('.');
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-      const { email, sub: google_id, name } = payload;
-      const resp = await api.post('/auth/google', { email, google_id, name });
-      setAuth(resp.data.access_token, resp.data.role);
-      showToast('Account created with Google!', 'success');
-      router.push('/account');
-    } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Google sign-up failed. Please try again.', 'error');
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,27 +96,28 @@ export default function RegisterPage() {
     if (password.length < 8) {
       showToast('Password must be at least 8 characters.', 'error'); return;
     }
-    setLoading(true);
+    send({ type: 'SUBMIT', email });
     try {
       await api.post('/auth/register', { email, full_name: name, password });
-      setSuccess(true);
+      send({ type: 'SUCCESS' });
       showToast('Registration successful! Please check your email.', 'success');
-    } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Registration failed. Try again.', 'error');
-    } finally {
-      setLoading(false);
+    } catch (err: unknown) {
+      const errorMsg = isAxiosError(err) ? err.response?.data?.detail : 'Registration failed. Try again.';
+      send({ type: 'ERROR', error: errorMsg || 'Error' });
+      showToast(errorMsg || 'Registration failed. Try again.', 'error');
     }
   };
 
   const handleResendVerification = async () => {
-    setLoading(true);
+    setResendLoading(true);
     try {
       await api.post('/auth/resend-verification', { email });
       showToast('A new verification link has been sent to your email.', 'success');
-    } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Failed to send verification link.', 'error');
+    } catch (err: unknown) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(detail || 'Failed to send verification link.', 'error');
     } finally {
-      setLoading(false);
+      setResendLoading(false);
     }
   };
 
@@ -521,10 +530,10 @@ export default function RegisterPage() {
                   <button 
                     type="button" 
                     onClick={handleResendVerification}
-                    disabled={loading}
+                    disabled={resendLoading}
                     style={{ background: 'transparent', color: '#d4af37', border: '1px solid #d4af37', borderRadius: '8px', padding: '0.6rem 1rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}
                   >
-                    Didn't receive the email? Resend Link
+                    Didn&apos;t receive the email? Resend Link
                   </button>
                 </div>
               </div>

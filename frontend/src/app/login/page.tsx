@@ -7,6 +7,9 @@ import { api } from '../../lib/api';
 import { useAuthStore } from '../../lib/store/authStore';
 import { useToast } from '../../context/ToastContext';
 import GlobalFooter from '../../components/GlobalFooter';
+import { useMachine } from '@xstate/react';
+import { authMachine } from '../../machines/authMachine';
+import { isAxiosError } from 'axios';
 
 declare global {
   interface Window {
@@ -16,9 +19,7 @@ declare global {
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleBtnReady, setGoogleBtnReady] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -27,11 +28,38 @@ export default function LoginPage() {
   const [newPassword, setNewPassword] = useState('');
   const [showForgot, setShowForgot] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  const [state, send] = useMachine(authMachine);
+  const loading = state.matches('loading');
 
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
   const { showToast } = useToast();
+
+  const handleGoogleResponse = async (credentialResponse: { credential: string }) => {
+    setGoogleLoading(true);
+    try {
+      const parts = credentialResponse.credential.split('.');
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const { email, sub: google_id, name } = payload;
+      const resp = await api.post('/auth/google', { email, google_id, name });
+      setAuth(resp.data.access_token, resp.data.role);
+      showToast('Signed in with Google!', 'success');
+      if (['superadmin', 'manager', 'staff'].includes(resp.data.role)) {
+        router.push('/luxe-control/dashboard');
+      } else {
+        router.push('/account');
+      }
+    } catch (err: unknown) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(detail || 'Google sign-up failed. Please try again.', 'error');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -68,33 +96,15 @@ export default function LoginPage() {
     document.body.appendChild(script);
   }, []);
 
-  const handleGoogleResponse = async (credentialResponse: any) => {
-    setGoogleLoading(true);
-    try {
-      const parts = credentialResponse.credential.split('.');
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-      const { email, sub: google_id, name } = payload;
-      const resp = await api.post('/auth/google', { email, google_id, name });
-      setAuth(resp.data.access_token, resp.data.role);
-      showToast('Signed in with Google!', 'success');
-      if (['superadmin', 'manager', 'staff'].includes(resp.data.role)) {
-        router.push('/luxe-control/dashboard');
-      } else {
-        router.push('/account');
-      }
-    } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Google sign-in failed. Please try again.', 'error');
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { showToast('Please fill out all fields.', 'error'); return; }
-    setLoading(true);
+    send({ type: 'SUBMIT', email });
     try {
       const resp = await api.post('/auth/login', { email, password });
+      send({ type: 'SUCCESS' });
       showToast('Login successful!', 'success');
       const targetUrl = ['superadmin', 'manager', 'staff'].includes(resp.data.role)
         ? '/luxe-control/dashboard'
@@ -103,74 +113,80 @@ export default function LoginPage() {
         setAuth(resp.data.access_token, resp.data.role);
         router.push(targetUrl);
       }, 800);
-    } catch (err: any) {
-      if (err.response?.data?.detail?.code === 'UNVERIFIED_EMAIL') {
+    } catch (err: unknown) {
+      const isAxios = isAxiosError(err);
+      if (isAxios && err.response?.data?.detail?.code === 'UNVERIFIED_EMAIL') {
         showToast(err.response.data.detail.msg, 'error');
         setUnverifiedEmail(email);
+        send({ type: 'ERROR', error: 'UNVERIFIED_EMAIL' });
       } else {
-        showToast(err.response?.data?.detail || 'Incorrect email or password.', 'error');
+        const detail = isAxios ? err.response?.data?.detail : null;
+        showToast(detail || 'Incorrect email or password.', 'error');
         setUnverifiedEmail('');
+        send({ type: 'ERROR', error: detail || 'Error' });
       }
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleResendVerification = async () => {
-    setLoading(true);
+    setResendLoading(true);
     try {
       await api.post('/auth/resend-verification', { email: unverifiedEmail });
       showToast('A new verification link has been sent to your email.', 'success');
       setUnverifiedEmail('');
-    } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Failed to send verification link.', 'error');
+    } catch (err: unknown) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(detail || 'Failed to send verification link.', 'error');
     } finally {
-      setLoading(false);
+      setResendLoading(false);
     }
   };
 
   const handleForgotRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) { showToast('Please enter your email.', 'error'); return; }
-    setLoading(true);
+    setForgotLoading(true);
     try {
       await api.post('/auth/forgot-password-request', { email });
       setOtpSent(true);
       showToast('6-digit OTP code sent to your email.', 'success');
-    } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Request failed.', 'error');
+    } catch (err: unknown) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(detail || 'Request failed.', 'error');
     } finally {
-      setLoading(false);
+      setForgotLoading(false);
     }
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpCode || otpCode.length !== 6) { showToast('Please enter a valid 6-digit OTP.', 'error'); return; }
-    setLoading(true);
+    setForgotLoading(true);
     try {
       const resp = await api.post('/auth/forgot-password-verify', { email, otp: otpCode });
       setResetToken(resp.data.reset_token);
       showToast('OTP verified. Set your new password.', 'success');
-    } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Verification failed.', 'error');
+    } catch (err: unknown) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(detail || 'Verification failed.', 'error');
     } finally {
-      setLoading(false);
+      setForgotLoading(false);
     }
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 8) { showToast('Password must be at least 8 characters.', 'error'); return; }
-    setLoading(true);
+    setForgotLoading(true);
     try {
       await api.post('/auth/forgot-password-reset', { token: resetToken, new_password: newPassword });
       showToast('Password reset! You can now log in.', 'success');
       setShowForgot(false); setOtpSent(false); setResetToken(null);
-    } catch (err: any) {
-      showToast(err.response?.data?.detail || 'Reset failed.', 'error');
+    } catch (err: unknown) {
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(detail || 'Reset failed.', 'error');
     } finally {
-      setLoading(false);
+      setForgotLoading(false);
     }
   };
 
@@ -620,13 +636,13 @@ export default function LoginPage() {
                   {unverifiedEmail && (
                     <div style={{ marginTop: '1rem', textAlign: 'center' }}>
                       <p style={{ color: '#d0c5af', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                        Didn't receive it?
+                        Didn&apos;t receive it?
                       </p>
                       <button 
                         type="button" 
                         onClick={handleResendVerification}
                         className="auth-btn-secondary" 
-                        disabled={loading}
+                        disabled={resendLoading}
                         style={{ width: '100%', padding: '0.75rem', background: 'transparent', color: '#d4af37', border: '1px solid #d4af37', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
                       >
                         Resend Link Manually
@@ -703,8 +719,8 @@ export default function LoginPage() {
                         required
                       />
                     </div>
-                    <button type="submit" className="auth-btn-primary" disabled={loading}>
-                      {loading && <span className="auth-spinner" />}
+                    <button type="submit" className="auth-btn-primary" disabled={forgotLoading}>
+                      {forgotLoading && <span className="auth-spinner" />}
                       Send Verification Code
                     </button>
                     <button type="button" className="auth-btn-ghost" onClick={() => setShowForgot(false)}>
@@ -728,8 +744,8 @@ export default function LoginPage() {
                         required
                       />
                     </div>
-                    <button type="submit" className="auth-btn-primary" disabled={loading}>
-                      {loading && <span className="auth-spinner" />}
+                    <button type="submit" className="auth-btn-primary" disabled={forgotLoading}>
+                      {forgotLoading && <span className="auth-spinner" />}
                       Verify Code
                     </button>
                     <button type="button" className="auth-btn-ghost" onClick={() => setOtpSent(false)}>
@@ -749,8 +765,8 @@ export default function LoginPage() {
                         required
                       />
                     </div>
-                    <button type="submit" className="auth-btn-primary" disabled={loading}>
-                      {loading && <span className="auth-spinner" />}
+                    <button type="submit" className="auth-btn-primary" disabled={forgotLoading}>
+                      {forgotLoading && <span className="auth-spinner" />}
                       Reset Password
                     </button>
                   </form>

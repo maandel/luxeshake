@@ -125,10 +125,10 @@ export default function PrivacyPolicyPage() {
           <div style={SECTION_STYLES}>
             <h2 style={H2_STYLES}>1. Introduction</h2>
             <p style={P_STYLES}>
-              Welcome to LuxeShake Artisanal Creamery ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or place an order with us.
+              Welcome to LuxeShake Artisanal Creamery (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or place an order with us.
             </p>
             <p style={P_STYLES}>
-              If you have questions or concerns about this policy, please contact us at <a href="mailto:hello@luxeshake.com" style={{ color: '#d4af37', textDecoration: 'none' }}>hello@luxeshake.com</a>.
+              If you have any questions or concerns about this Privacy Policy or our data practices, please contact us at &quot;support@luxeshake.com&quot; or call us at &quot;1-800-LUX-SHAKE&quot;.
             </p>
           </div>
 

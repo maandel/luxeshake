@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Script from 'next/script';
 import { useCartStore } from '../../lib/store/cartStore';
 import { api } from '../../lib/api';
+import { isAxiosError } from 'axios';
 import { useToast } from '../../context/ToastContext';
 
 interface DeliveryArea {
@@ -129,7 +130,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose }) => {
         return;
       }
 
-      // Open Paystack inline popup
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (typeof window !== 'undefined' && !(window as any).PaystackPop) {
         showToast('Payment gateway is still loading. Please wait a split second and try again.', 'info');
         setLoading(false);
@@ -137,12 +138,13 @@ export const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose }) => {
         return;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const handler = (window as any).PaystackPop.setup({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_mock_public_key',
         email: email,
         amount: total * 100, // in kobo
         ref: payData.reference,
-        callback: (response: any) => {
+        callback: (response: { reference: string }) => {
           showToast('Payment successful. Verifying...', 'info');
           handleVerifyPayment(response.reference);
         },
@@ -153,11 +155,12 @@ export const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose }) => {
         }
       });
       handler.openIframe();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Checkout error detail:', err);
       setLoading(false);
       setStep('failed');
-      showToast(err.response?.data?.detail || 'Checkout process failed. Please try again.', 'error');
+      const detail = isAxiosError(err) ? err.response?.data?.detail : null;
+      showToast(detail || 'Checkout process failed. Please try again.', 'error');
     }
   };
 
@@ -194,12 +197,12 @@ export const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose }) => {
   return (
     <>
       <Script src="https://js.paystack.co/v1/inline.js" strategy="afterInteractive" />
-      <div className="order-overlay open" onClick={step === 'processing' ? undefined : onClose}>
-        <div className="order-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="order-overlay open" onClick={step === 'processing' ? undefined : onClose} aria-hidden={!isOpen}>
+        <div className="order-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
           <div className="order-modal-head">
-            <h3>{step === 'success' ? 'Order Success' : step === 'failed' ? 'Order Failed' : 'Checkout'}</h3>
+            <h3 id="order-modal-title">{step === 'success' ? 'Order Success' : step === 'failed' ? 'Order Failed' : 'Checkout'}</h3>
             {step !== 'processing' && step !== 'success' && (
-              <button className="cart-close" onClick={onClose}>
+              <button className="cart-close" onClick={onClose} aria-label="Close Checkout Modal">
                 ✕
               </button>
             )}
@@ -290,7 +293,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({ isOpen, onClose }) => {
                       name="fulfillment"
                       className="fulfillment-select"
                       value={fulfillment}
-                      onChange={(e) => setFulfillment(e.target.value as any)}
+                      onChange={(e) => setFulfillment(e.target.value as 'delivery' | 'pickup')}
                     >
                       <option value="delivery">Delivery</option>
                       <option value="pickup">Pickup</option>

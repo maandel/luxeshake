@@ -2,25 +2,21 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { Star, ArrowDown } from 'lucide-react';
+import { WebGLHero } from './WebGLHero';
 
 export const Hero: React.FC = () => {
   return (
     <section className="relative h-screen flex items-center overflow-hidden pt-20" id="home">
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-r from-cacao-black via-cacao-black/80 to-transparent z-10"></div>
-        <Image 
-          alt="LuxeShake Signature Drink" 
-          className="object-cover" 
-          src="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=1600&auto=format&fit=crop"
-          fill
-        />
+      <div className="absolute inset-0 z-0 bg-cacao-black">
+        <WebGLHero />
+        <div className="absolute inset-0 bg-gradient-to-r from-cacao-black/90 via-cacao-black/40 to-transparent z-10 pointer-events-none"></div>
       </div>
       
       <div className="relative z-20 max-w-container-max mx-auto px-margin-mobile md:px-gutter w-full">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full bg-gold-leaf/10 border border-gold-leaf/20 text-gold-leaf font-label-caps">
-            <span className="material-symbols-outlined text-[14px]">star</span>
+            <Star size={14} className="text-gold-leaf" />
             Premium Quality
           </div>
           
@@ -44,9 +40,9 @@ export const Hero: React.FC = () => {
       </div>
       
       {/* Floating Badge decoration */}
-      <div className="absolute bottom-12 right-12 hidden lg:flex flex-col items-center gap-2 animate-bounce">
+      <div className="absolute bottom-12 right-12 hidden lg:flex flex-col items-center gap-2 animate-bounce pointer-events-none z-20">
         <div className="w-16 h-16 rounded-full border-2 border-gold-leaf flex items-center justify-center">
-          <span className="material-symbols-outlined text-gold-leaf">arrow_downward</span>
+          <ArrowDown size={24} className="text-gold-leaf" />
         </div>
         <span className="font-label-caps text-[10px] text-gold-leaf/50 uppercase">Discover more</span>
       </div>

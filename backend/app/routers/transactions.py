@@ -18,7 +18,12 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 import httpx
-from tenacity import AsyncRetrying, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    AsyncRetrying,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 from app.database import get_db
 from app.config import settings
@@ -121,7 +126,9 @@ async def initialize_payment(
             async for attempt in AsyncRetrying(
                 wait=wait_exponential(multiplier=1, min=2, max=10),
                 stop=stop_after_attempt(3),
-                retry=retry_if_exception_type((httpx.RequestError, httpx.TimeoutException)),
+                retry=retry_if_exception_type(
+                    (httpx.RequestError, httpx.TimeoutException)
+                ),
                 reraise=True,
             ):
                 with attempt:
@@ -216,7 +223,9 @@ async def verify_payment(
             async for attempt in AsyncRetrying(
                 wait=wait_exponential(multiplier=1, min=2, max=10),
                 stop=stop_after_attempt(3),
-                retry=retry_if_exception_type((httpx.RequestError, httpx.TimeoutException)),
+                retry=retry_if_exception_type(
+                    (httpx.RequestError, httpx.TimeoutException)
+                ),
                 reraise=True,
             ):
                 with attempt:

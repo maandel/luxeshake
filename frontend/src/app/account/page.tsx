@@ -177,7 +177,7 @@ export default function AccountPage() {
   const fetchOrders = async () => {
     try {
       setLoadingOrders(true);
-      const resp = await api.get('/orders/my-orders?page=1&page_size=20');
+      const resp = await api.get('/users/me/orders?page=1&page_size=20');
       setOrders(resp.data.items || []);
     } catch { showToast('Failed to load orders.', 'error'); }
     finally { setLoadingOrders(false); }
@@ -271,7 +271,7 @@ export default function AccountPage() {
     setSelectedOrder(order);
     setLoadingOrderDetail(true);
     try {
-      const resp = await api.get(`/orders/my-orders/${order.id}`);
+      const resp = await api.get(`/users/me/orders/${order.id}`);
       setSelectedOrder(resp.data);
     } catch { showToast('Failed to load order details.', 'error'); }
     finally { setLoadingOrderDetail(false); }

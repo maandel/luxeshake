@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import fs from "fs";
 import path from "path";
+import withSerwistInit from "@serwist/next";
 
 // Manually parse and load parent or local .env if exists
 try {
@@ -43,7 +44,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
  */
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://js.paystack.co https://accounts.google.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paystack.co https://accounts.google.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://res.cloudinary.com",
@@ -76,4 +77,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  disable: process.env.NODE_ENV === "development",
+});
+
+export default withSerwist(nextConfig);

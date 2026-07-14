@@ -1,8 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
-
 import React from 'react';
+import Image from 'next/image';
 import { useCartStore } from '../../lib/store/cartStore';
 
 interface CartDrawerProps {
@@ -48,9 +47,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, onCheck
               {items.map((item) => (
                 <div key={`${item.id}-${item.size}`} className="grid grid-cols-[60px_1fr_auto] gap-4 items-center py-3 border-b border-gold-leaf/10">
                   <div className="w-[60px] h-[60px] rounded-lg overflow-hidden border border-gold-leaf/15 shrink-0">
-                    <img
+                    <Image
                       src="https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=200"
                       alt={item.name}
+                      width={60}
+                      height={60}
                       className="w-full h-full object-cover"
                     />
                   </div>

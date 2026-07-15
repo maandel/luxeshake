@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { api } from '../../../lib/api';
+import { api, fetcher } from '../../../lib/api';
+import useSWR from 'swr';
 import { useAuthStore } from '../../../lib/store/authStore';
 import { useToast } from '../../../context/ToastContext';
 
@@ -40,11 +41,7 @@ export default function AdminTicketsPage() {
   const { role } = useAuthStore();
   const { showToast } = useToast();
 
-  const [tickets, setTickets] = useState<SupportTicket[]>([]);
-  const [staffUsers, setStaffUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
   const [filterStatus, setFilterStatus] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -60,41 +57,20 @@ export default function AdminTicketsPage() {
   const [assigneeId, setAssigneeId] = useState('');
   const [assigning, setAssigning] = useState(false);
 
-  const fetchTickets = async () => {
-    setLoading(true);
-    try {
-      let url = `/admin/complaints?page=${page}&page_size=20`;
-      if (filterStatus) url += `&status=${filterStatus}`;
-      if (filterCategory) url += `&category=${encodeURIComponent(filterCategory)}`;
-      if (filterPriority) url += `&priority=${filterPriority}`;
+  let ticketsUrl = `/admin/complaints?page=${page}&page_size=20`;
+  if (filterStatus) ticketsUrl += `&status=${filterStatus}`;
+  if (filterCategory) ticketsUrl += `&category=${encodeURIComponent(filterCategory)}`;
+  if (filterPriority) ticketsUrl += `&priority=${filterPriority}`;
 
-      const resp = await api.get(url);
-      setTickets(resp.data.items || []);
-      setTotalPages(resp.data.total_pages || 1);
-    } catch (err: any) {
-      showToast('Failed to load tickets.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: ticketsData, isLoading: loading, mutate: mutateTickets } = useSWR(ticketsUrl, fetcher);
+  const tickets: SupportTicket[] = ticketsData?.items || [];
+  const totalPages = ticketsData?.total_pages || 1;
 
-  const fetchStaff = async () => {
-    if (role !== 'superadmin') return;
-    try {
-      const resp = await api.get('/admin/users?page=1&page_size=100');
-      const admins = resp.data.filter((u: AdminUser) => ['superadmin', 'manager', 'staff'].includes(u.role));
-      setStaffUsers(admins);
-    } catch (err: any) {
-    }
-  };
-
-  useEffect(() => {
-    fetchTickets();
-  }, [page, filterStatus, filterCategory, filterPriority]);
-
-  useEffect(() => {
-    fetchStaff();
-  }, [role]);
+  const staffUrl = role === 'superadmin' ? '/admin/users?page=1&page_size=100' : null;
+  const { data: staffData } = useSWR(staffUrl, fetcher);
+  const staffUsers: AdminUser[] = React.useMemo(() => {
+    return staffData?.items?.filter((u: AdminUser) => ['superadmin', 'manager', 'staff'].includes(u.role)) || [];
+  }, [staffData]);
 
   const handleViewTicket = async (t: SupportTicket) => {
     setSelectedTicket(t);
@@ -124,7 +100,7 @@ export default function AdminTicketsPage() {
       setSelectedTicket(resp.data);
       setReplyText('');
       showToast('Reply sent.', 'success');
-      fetchTickets();
+      mutateTickets();
     } catch (err: any) {
       showToast('Failed to send reply.', 'error');
     } finally {
@@ -142,7 +118,7 @@ export default function AdminTicketsPage() {
       });
       setSelectedTicket(resp.data);
       showToast('Ticket state updated.', 'success');
-      fetchTickets();
+      mutateTickets();
     } catch (err: any) {
       showToast('Failed to update ticket state.', 'error');
     } finally {
@@ -159,7 +135,7 @@ export default function AdminTicketsPage() {
       });
       setSelectedTicket(resp.data);
       showToast('Ticket assigned successfully.', 'success');
-      fetchTickets();
+      mutateTickets();
     } catch (err: any) {
       showToast(err.response?.data?.detail || 'Assignment failed.', 'error');
     } finally {

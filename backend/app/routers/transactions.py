@@ -76,7 +76,7 @@ async def initialize_payment(
         elif tx.status == "pending":
             tx.status = "failed"
             db.add(tx)
-    
+
     await db.commit()
 
     paystack_amount = order.total * 100
@@ -324,7 +324,7 @@ async def paystack_webhook(
 
         if tx and tx.status != "success":
             webhook_amount_kobo = data.get("amount", 0)
-            expected_amount_kobo = int(tx.amount * 100) 
+            expected_amount_kobo = int(tx.amount * 100)
             if webhook_amount_kobo != expected_amount_kobo:
                 logger.warning(
                     "paystack_webhook_amount_mismatch",

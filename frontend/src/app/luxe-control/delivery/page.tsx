@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { api } from '../../../lib/api';
+import React, { useState } from 'react';
+import useSWR from 'swr';
+import { api, fetcher } from '../../../lib/api';
 import { useAuthStore } from '../../../lib/store/authStore';
 import { useToast } from '../../../context/ToastContext';
 import ConfirmModal from '../../../components/admin/ConfirmModal';
@@ -18,8 +19,13 @@ export default function AdminDeliveryPage() {
   const { role } = useAuthStore();
   const { showToast } = useToast();
 
-  const [areas, setAreas] = useState<DeliveryArea[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const url = `/admin/delivery-areas?page=${page}&page_size=20`;
+  
+  const { data, isLoading, mutate } = useSWR(url, fetcher);
+  const areas: DeliveryArea[] = data?.items || [];
+  const totalPages = data?.total_pages || 1;
+  const loading = isLoading;
 
   // Modal / Form state
   const [showModal, setShowModal] = useState(false);
@@ -36,21 +42,7 @@ export default function AdminDeliveryPage() {
     areaId: string | null;
   }>({ isOpen: false, areaId: null });
 
-  const fetchAreas = async () => {
-    setLoading(true);
-    try {
-      const resp = await api.get('/admin/delivery-areas');
-      setAreas(resp.data || []);
-    } catch (err: any) {
-      showToast('Failed to load delivery zones.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAreas();
-  }, []);
+  // Removed old fetchAreas in favor of SWR
 
   const openNewArea = () => {
     setEditingArea(null);
@@ -93,7 +85,7 @@ export default function AdminDeliveryPage() {
         showToast('Delivery zone created.', 'success');
       }
       setShowModal(false);
-      fetchAreas();
+      mutate();
     } catch (err: any) {
       showToast(err.response?.data?.detail || 'Failed to save delivery zone.', 'error');
     } finally {
@@ -112,7 +104,7 @@ export default function AdminDeliveryPage() {
     try {
       await api.delete(`/admin/delivery-areas/${id}`);
       showToast('Delivery zone deactivated.', 'info');
-      fetchAreas();
+      mutate();
     } catch (err: any) {
       showToast('Deactivation failed.', 'error');
     }
@@ -185,6 +177,15 @@ export default function AdminDeliveryPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Pagination controls */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Page {page} of {totalPages}</span>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="qty-btn" style={{ width: 'auto', padding: '0 0.8rem', borderRadius: '4px' }}>Prev</button>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="qty-btn" style={{ width: 'auto', padding: '0 0.8rem', borderRadius: '4px' }}>Next</button>
+            </div>
           </div>
         </div>
       )}

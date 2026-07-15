@@ -74,7 +74,7 @@ async def list_audit_logs(
     }
 
 
-@router.get("/users", response_model=list[UserResponse])
+@router.get("/users")
 async def list_users(
     superadmin: Annotated[User, Depends(require_superadmin)],
     page: int = Query(1, ge=1),
@@ -82,10 +82,21 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
 ):
     offset = (page - 1) * page_size
-    result = await db.execute(
-        select(User).order_by(User.created_at.desc()).offset(offset).limit(page_size)  # noqa: E501
-    )
-    return result.scalars().all()
+    query = select(User).order_by(User.created_at.desc())
+
+    count_res = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_res.scalar() or 0
+
+    result = await db.execute(query.offset(offset).limit(page_size))
+    users = result.scalars().all()
+
+    return {
+        "items": [UserResponse.model_validate(u) for u in users],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size,
+    }
 
 
 @router.post(

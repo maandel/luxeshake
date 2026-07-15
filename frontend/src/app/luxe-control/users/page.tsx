@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { api } from '../../../lib/api';
+import React, { useState } from 'react';
+import useSWR from 'swr';
+import { api, fetcher } from '../../../lib/api';
 import { useAuthStore } from '../../../lib/store/authStore';
 import { useToast } from '../../../context/ToastContext';
 import ConfirmModal from '../../../components/admin/ConfirmModal';
@@ -20,8 +21,12 @@ export default function AdminUsersPage() {
   const { showToast } = useToast();
 
   const [activeSubTab, setActiveSubTab] = useState<'users' | 'matrix'>('users');
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const url = role === 'superadmin' ? `/admin/users?page=${page}&page_size=20` : null;
+  const { data, isLoading, mutate } = useSWR(url, fetcher);
+  const users: User[] = data?.items || [];
+  const totalPages = data?.total_pages || 1;
+  const loading = isLoading;
 
   // Modal / Form state
   const [showModal, setShowModal] = useState(false);
@@ -45,23 +50,6 @@ export default function AdminUsersPage() {
   // Matrix description state
   const [selectedPermission, setSelectedPermission] = useState<string | null>(null);
 
-  const fetchUsers = async () => {
-    if (role !== 'superadmin') return;
-    setLoading(true);
-    try {
-      const resp = await api.get('/admin/users?page=1&page_size=100');
-      setUsers(resp.data || []);
-    } catch (err: any) {
-      showToast('Failed to load users list.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, [role]);
-
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !fullName || !password) {
@@ -80,7 +68,7 @@ export default function AdminUsersPage() {
       setFullName('');
       setPassword('');
       setShowModal(false);
-      fetchUsers();
+      mutate();
     } catch (err: any) {
       showToast(err.response?.data?.detail || 'Failed to create user.', 'error');
     } finally {
@@ -92,7 +80,7 @@ export default function AdminUsersPage() {
     try {
       await api.patch(`/admin/users/${id}/role?role=${newRole}`);
       showToast(`User role updated to ${newRole}.`, 'success');
-      fetchUsers();
+      mutate();
     } catch (err: any) {
       showToast('Failed to update role.', 'error');
     }
@@ -102,7 +90,7 @@ export default function AdminUsersPage() {
     try {
       await api.patch(`/admin/users/${id}/deactivate`);
       showToast('User activation state toggled.', 'success');
-      fetchUsers();
+      mutate();
     } catch (err: any) {
       showToast('Operation failed.', 'error');
     }
@@ -120,7 +108,7 @@ export default function AdminUsersPage() {
     try {
       await api.delete(`/admin/users/${id}`);
       showToast('User permanently deleted.', 'info');
-      fetchUsers();
+      mutate();
     } catch (err: any) {
       showToast('Deletion failed.', 'error');
     }
@@ -138,7 +126,7 @@ export default function AdminUsersPage() {
     try {
       await api.post(`/admin/users/${id}/reset-password`);
       showToast('Password reset successfully. Email sent to user.', 'success');
-      fetchUsers();
+      mutate();
     } catch (err: any) {
       showToast(err.response?.data?.detail || 'Reset failed.', 'error');
     }
@@ -274,6 +262,15 @@ export default function AdminUsersPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Pagination controls */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Page {page} of {totalPages}</span>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="qty-btn" style={{ width: 'auto', padding: '0 0.8rem', borderRadius: '4px' }}>Prev</button>
+                  <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="qty-btn" style={{ width: 'auto', padding: '0 0.8rem', borderRadius: '4px' }}>Next</button>
+                </div>
               </div>
             </div>
           )}

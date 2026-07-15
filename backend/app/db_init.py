@@ -69,6 +69,23 @@ async def init_db():
             )
         )
 
+        # Add indexes for created_at optimization (idempotent)
+        await conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_orders_created_at ON orders (created_at);"
+            )
+        )
+        await conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_users_created_at ON users (created_at);"
+            )
+        )
+        await conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_complaints_created_at ON complaints (created_at);"
+            )
+        )
+
         # ── Security hardening additions (idempotent) ───────────────────────
         # Add soft-delete column to users
         await conn.execute(

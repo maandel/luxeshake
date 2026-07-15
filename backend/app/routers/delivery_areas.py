@@ -6,7 +6,7 @@ from app.dependencies.auth_deps import require_manager_or_above
 from app.models.delivery_area import DeliveryArea
 from app.schemas.delivery_area import DeliveryAreaCreate, DeliveryAreaResponse
 from app.services.cache import cache_get, cache_set, cache_invalidate
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,13 +33,31 @@ async def list_delivery_areas(response: Response, db: AsyncSession = Depends(get
 
 
 # Admin routes
-@router.get("/admin/delivery-areas", response_model=list[DeliveryAreaResponse])
+@router.get("/admin/delivery-areas")
 async def admin_list_delivery_areas(
     manager: Annotated[dict, Depends(require_manager_or_above)],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(DeliveryArea).order_by(DeliveryArea.sort_order))
-    return result.scalars().all()
+    offset = (page - 1) * page_size
+    query = select(DeliveryArea).order_by(DeliveryArea.sort_order)
+
+    from sqlalchemy import func
+
+    count_res = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_res.scalar() or 0
+
+    result = await db.execute(query.offset(offset).limit(page_size))
+    items = result.scalars().all()
+
+    return {
+        "items": [DeliveryAreaResponse.model_validate(item) for item in items],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size,
+    }
 
 
 @router.post(

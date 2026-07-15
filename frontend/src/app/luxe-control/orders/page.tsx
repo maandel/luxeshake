@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { api } from '../../../lib/api';
+import React, { useState } from 'react';
+import useSWR from 'swr';
+import { api, fetcher } from '../../../lib/api';
 import { useAuthStore } from '../../../lib/store/authStore';
 import { useToast } from '../../../context/ToastContext';
 
@@ -51,37 +52,22 @@ export default function AdminOrdersPage() {
   const { role } = useAuthStore();
   const { showToast } = useToast();
 
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [filterStatus, setFilterStatus] = useState<string>('');
   
+  const url = filterStatus 
+    ? `/admin/orders?page=${page}&page_size=20&status=${filterStatus}`
+    : `/admin/orders?page=${page}&page_size=20`;
+
+  const { data, isLoading, mutate } = useSWR(url, fetcher);
+  const orders: Order[] = data?.items || [];
+  const totalPages = data?.total_pages || 1;
+  const loading = isLoading;
+
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [driverPhone, setDriverPhone] = useState('');
-
-  const fetchOrders = async () => {
-    setLoading(true);
-    try {
-      let url = `/admin/orders?page=${page}&page_size=20`;
-      if (filterStatus) {
-        url += `&status=${filterStatus}`;
-      }
-      const resp = await api.get(url);
-      setOrders(resp.data.items || []);
-      setTotalPages(resp.data.total_pages || 1);
-    } catch (err: any) {
-      showToast('Failed to load orders.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOrders();
-  }, [page, filterStatus]);
 
   const handleViewOrder = async (order: Order) => {
     setSelectedOrder(order);
@@ -112,8 +98,8 @@ export default function AdminOrdersPage() {
       });
       showToast(`Order status updated to ${getStatusLabel(newStatus, selectedOrder.fulfillment_type)}.`, 'success');
       setSelectedOrder(resp.data);
-      // Refresh order list
-      fetchOrders();
+      // Refresh order list instantly
+      mutate();
     } catch (err: any) {
       showToast('Failed to update status.', 'error');
     } finally {

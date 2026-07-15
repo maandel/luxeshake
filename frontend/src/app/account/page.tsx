@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { api } from '../../lib/api';
+import { api, fetcher } from '../../lib/api';
+import useSWR from 'swr';
 import { useAuthStore } from '../../lib/store/authStore';
 import { useToast } from '../../context/ToastContext';
 import GlobalFooter from '../../components/GlobalFooter';
@@ -103,10 +104,18 @@ export default function AccountPage() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(false);
-  const [tickets, setTickets] = useState<SupportTicket[]>([]);
-  const [loadingTickets, setLoadingTickets] = useState(false);
+
+  const [pageOrders, setPageOrders] = useState(1);
+  const ordersUrl = activeTab === 'orders' ? `/users/me/orders?page=${pageOrders}&page_size=20` : null;
+  const { data: ordersData, isLoading: loadingOrders, mutate: mutateOrders } = useSWR(ordersUrl, fetcher);
+  const orders: Order[] = ordersData?.items || [];
+  const ordersTotalPages = ordersData?.total_pages || 1;
+
+  const [pageTickets, setPageTickets] = useState(1);
+  const ticketsUrl = activeTab === 'tickets' ? `/complaints/my-tickets?page=${pageTickets}&page_size=20` : null;
+  const { data: ticketsData, isLoading: loadingTickets, mutate: mutateTickets } = useSWR(ticketsUrl, fetcher);
+  const tickets: SupportTicket[] = ticketsData?.items || [];
+  const ticketsTotalPages = ticketsData?.total_pages || 1;
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -174,28 +183,7 @@ export default function AccountPage() {
     initializeAuthAndProfile();
   }, [accessToken]);
 
-  const fetchOrders = async () => {
-    try {
-      setLoadingOrders(true);
-      const resp = await api.get('/users/me/orders?page=1&page_size=20');
-      setOrders(resp.data.items || []);
-    } catch { showToast('Failed to load orders.', 'error'); }
-    finally { setLoadingOrders(false); }
-  };
-
-  const fetchTickets = async () => {
-    try {
-      setLoadingTickets(true);
-      const resp = await api.get('/complaints/my-tickets?page=1&page_size=20');
-      setTickets(resp.data.items || []);
-    } catch { showToast('Failed to load tickets.', 'error'); }
-    finally { setLoadingTickets(false); }
-  };
-
-  useEffect(() => {
-    if (activeTab === 'orders') fetchOrders();
-    else if (activeTab === 'tickets') fetchTickets();
-  }, [activeTab]);
+  // Fetch methods removed in favor of SWR
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -238,7 +226,7 @@ export default function AccountPage() {
       await api.post('/complaints/tickets', { subject: ticketSubject, category: ticketCategory, message: ticketMessage });
       showToast('Support ticket created.', 'success');
       setTicketSubject(''); setTicketMessage(''); setTicketCategory('wrong_order'); setShowCreateTicket(false);
-      fetchTickets();
+      mutateTickets();
     } catch { showToast('Failed to create ticket.', 'error'); }
     finally { setCreatingTicket(false); }
   };
@@ -262,7 +250,7 @@ export default function AccountPage() {
       setSelectedTicket(resp.data);
       setReplyText('');
       showToast('Reply sent.', 'success');
-      fetchTickets();
+      mutateTickets();
     } catch { showToast('Failed to send reply.', 'error'); }
     finally { setSendingReply(false); }
   };
@@ -1518,6 +1506,17 @@ export default function AccountPage() {
                             })}
                           </tbody>
                         </table>
+                        
+                        {/* Pagination */}
+                        {ordersTotalPages > 1 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', padding: '0 1rem 1rem' }}>
+                            <span style={{ fontSize: '0.8rem', color: '#99907c' }}>Page {pageOrders} of {ordersTotalPages}</span>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button onClick={() => setPageOrders(p => Math.max(1, p - 1))} disabled={pageOrders === 1} className="acc-btn-outline" style={{ padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>Prev</button>
+                              <button onClick={() => setPageOrders(p => Math.min(ordersTotalPages, p + 1))} disabled={pageOrders === ordersTotalPages} className="acc-btn-outline" style={{ padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>Next</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1617,6 +1616,17 @@ export default function AccountPage() {
                             </div>
                           );
                         })}
+
+                        {/* Pagination */}
+                        {ticketsTotalPages > 1 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(212, 175, 55, 0.12)' }}>
+                            <span style={{ fontSize: '0.8rem', color: '#99907c' }}>Page {pageTickets} of {ticketsTotalPages}</span>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button onClick={() => setPageTickets(p => Math.max(1, p - 1))} disabled={pageTickets === 1} className="acc-btn-outline" style={{ padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>Prev</button>
+                              <button onClick={() => setPageTickets(p => Math.min(ticketsTotalPages, p + 1))} disabled={pageTickets === ticketsTotalPages} className="acc-btn-outline" style={{ padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>Next</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

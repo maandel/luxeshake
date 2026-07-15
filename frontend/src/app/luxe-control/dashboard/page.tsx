@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api } from '../../../lib/api';
+import { api, fetcher } from '../../../lib/api';
+import useSWR from 'swr';
 import { useAuthStore } from '../../../lib/store/authStore';
 import { useToast } from '../../../context/ToastContext';
 
@@ -30,30 +31,20 @@ export default function AdminDashboardPage() {
   const { role } = useAuthStore();
   const { showToast } = useToast();
 
-  const [loading, setLoading] = useState(true);
-  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [exporting, setExporting] = useState(false);
 
-  const fetchDashboardData = async () => {
-    if (role === 'staff') {
-      setLoading(false);
-      return; // Staff doesn't have access to analytics endpoint
-    }
-
-    try {
-      setLoading(true);
-      const resp = await api.get('/admin/analytics/summary');
-      setSummary(resp.data);
-    } catch (err: any) {
-      showToast('Failed to load analytics summary.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const shouldFetch = role !== 'staff' && role !== null;
+  const { data: summary, error, isLoading: loading } = useSWR<AnalyticsSummary>(
+    shouldFetch ? '/admin/analytics/summary' : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [role]);
+    if (error) {
+      showToast('Failed to load analytics summary.', 'error');
+    }
+  }, [error, showToast]);
 
   const handleExportCSV = async () => {
     setExporting(true);

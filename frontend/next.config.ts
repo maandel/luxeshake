@@ -65,6 +65,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   turbopack: {},
   reactStrictMode: true,
   images: {

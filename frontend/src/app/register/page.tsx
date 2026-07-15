@@ -34,10 +34,7 @@ export default function RegisterPage() {
   const handleGoogleResponse = async (credentialResponse: { credential: string }) => {
     setGoogleLoading(true);
     try {
-      const parts = credentialResponse.credential.split('.');
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-      const { email, sub: google_id, name } = payload;
-      const resp = await api.post('/auth/google', { email, google_id, name });
+      const resp = await api.post('/auth/google', { credential: credentialResponse.credential });
       setAuth(resp.data.access_token, resp.data.role);
       showToast('Account created with Google!', 'success');
       router.push('/account');

@@ -65,9 +65,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   turbopack: {},
   reactStrictMode: true,
   images: {

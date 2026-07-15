@@ -35,6 +35,10 @@ try {
 }
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+let apiOrigin = apiUrl;
+try {
+  apiOrigin = new URL(apiUrl).origin;
+} catch (e) {}
 
 /**
  * Content Security Policy.
@@ -47,8 +51,8 @@ const CSP = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paystack.co https://accounts.google.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://paystack.com https://accounts.google.com",
   "font-src 'self' https://fonts.gstatic.com",
-  `img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com ${apiUrl}`,
-  `connect-src 'self' ${apiUrl} https://api.paystack.co https://accounts.google.com`,
+  `img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com ${apiOrigin}`,
+  `connect-src 'self' ${apiOrigin} https://api.paystack.co https://accounts.google.com`,
   "frame-src https://accounts.google.com https://checkout.paystack.com/",
   "frame-ancestors 'none'",
   "base-uri 'self'",

@@ -1,6 +1,6 @@
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
+import { Serwist, StaleWhileRevalidate, ExpirationPlugin } from "serwist";
 
 // This declares the value of `injectionPoint` to TypeScript.
 // `injectionPoint` is the string that will be replaced by the
@@ -24,14 +24,15 @@ const serwist = new Serwist({
     // Add custom runtime caching for product catalog
     {
       matcher: ({ url }) => url.pathname.startsWith('/api/products') || url.pathname.startsWith('/api/categories'),
-      handler: 'StaleWhileRevalidate',
-      options: {
+      handler: new StaleWhileRevalidate({
         cacheName: 'product-catalog',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
-        },
-      },
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 50,
+            maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          }),
+        ],
+      }),
     },
   ],
 });

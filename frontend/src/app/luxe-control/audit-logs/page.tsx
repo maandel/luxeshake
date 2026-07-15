@@ -218,7 +218,7 @@ export default function AuditLogsPage() {
                     </td>
                     <td>{log.user_id ? log.user_id.split('-')[0] + '...' : 'System'}</td>
                     <td>{log.ip_address || 'N/A'}</td>
-                    <td>{log.resource ? \`\${log.resource} (\${log.resource_id || ''})\` : '-'}</td>
+                    <td>{log.resource ? `${log.resource} (${log.resource_id || ''})` : '-'}</td>
                     <td>
                       <button className="view-btn" onClick={() => setSelectedLog(log)}>View</button>
                     </td>

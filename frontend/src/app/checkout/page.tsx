@@ -1010,7 +1010,7 @@ export default function CheckoutPage() {
                         <span className="material-symbols-outlined" style={{ fontSize: '18px', fontVariationSettings: "'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 20", lineHeight: 1 }}>lock</span>
                         Pay Securely via Paystack
                       </button>
-                      <button className="checkout-btn-secondary" onClick={() => setStep('form')}>
+                      <button className="checkout-btn-secondary" onClick={() => send({ type: 'BACK_TO_FORM' })}>
                         Edit Details
                       </button>
                     </div>

@@ -55,7 +55,6 @@ async def initialize_payment(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid order_id format")
 
-    # Fetch order
     ord_res = await db.execute(
         select(Order).options(selectinload(Order.items)).where(Order.id == order_id)
     )
@@ -63,7 +62,6 @@ async def initialize_payment(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    # 1. Idempotency Flow: Check if a successful or pending transaction already exists
     tx_res = await db.execute(
         select(Transaction).where(Transaction.order_id == order.id)
     )
@@ -76,16 +74,11 @@ async def initialize_payment(
                 "reference": tx.paystack_reference,
             }
         elif tx.status == "pending":
-            # Return existing pending transaction reference to avoid duplicate initialization on Paystack
-            return {
-                "detail": "Payment already initialized",
-                "status": "pending",
-                "reference": tx.paystack_reference,
-                "amount": order.total,
-            }
+            tx.status = "failed"
+            db.add(tx)
+    
+    await db.commit()
 
-    # Initialize Paystack transaction
-    # Amount in kobo (multiply by 100)
     paystack_amount = order.total * 100
     reference = str(uuid.uuid4())
 
@@ -105,7 +98,6 @@ async def initialize_payment(
         },
     }
 
-    # If running with mock test key, return mock auth details directly without calling Paystack API
     if settings.PAYSTACK_SECRET_KEY == "sk_test_mock_secret_key":
         new_tx = Transaction(
             order_id=order.id,
@@ -288,10 +280,8 @@ async def paystack_webhook(
     x_paystack_signature: Annotated[str | None, Header()] = None,
     db: AsyncSession = Depends(get_db),
 ):
-    # 1. Read body ONCE — must not call request.json() after this
     body = await request.body()
 
-    # 2. Verify Webhook Signature
     if not x_paystack_signature:
         raise HTTPException(status_code=400, detail="Missing signature header")
 
@@ -302,7 +292,6 @@ async def paystack_webhook(
     if not hmac.compare_digest(computed_sig, x_paystack_signature):
         raise HTTPException(status_code=401, detail="Invalid signature")
 
-    # 3. Parse JSON from already-read bytes (avoid second .body() read)
     import json
 
     try:
@@ -334,9 +323,8 @@ async def paystack_webhook(
         tx = tx_res.scalars().first()
 
         if tx and tx.status != "success":
-            # 4. Amount verification — prevent tampered webhook from marking unpaid orders as paid
-            webhook_amount_kobo = data.get("amount", 0)  # Paystack sends in kobo
-            expected_amount_kobo = int(tx.amount * 100)  # tx.amount is in Naira
+            webhook_amount_kobo = data.get("amount", 0)
+            expected_amount_kobo = int(tx.amount * 100) 
             if webhook_amount_kobo != expected_amount_kobo:
                 logger.warning(
                     "paystack_webhook_amount_mismatch",
@@ -388,9 +376,6 @@ async def paystack_webhook(
                 )
 
     return {"detail": "Webhook received"}
-
-
-# ----------------- ADMIN TRANS ROUTES (Manager+) -----------------
 
 
 @router.get("/admin/transactions")

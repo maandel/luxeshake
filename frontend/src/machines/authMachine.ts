@@ -1,4 +1,4 @@
-import { createMachine, assign } from 'xstate';
+import { setup, assign } from 'xstate';
 
 interface AuthContext {
   email: string;
@@ -11,52 +11,64 @@ type AuthEvent =
   | { type: 'ERROR'; error: string }
   | { type: 'RESET' };
 
-export const authMachine = createMachine<AuthContext, AuthEvent>(
-  {
-    id: 'auth',
-    initial: 'idle',
-    context: {
-      email: '',
-      error: null,
-    },
-    states: {
-      idle: {
-        on: {
-          SUBMIT: {
-            target: 'loading',
-            actions: assign({
-              email: (context, event) => event.email,
-              error: null,
-            }),
-          },
+export const authMachine = setup({
+  types: {
+    context: {} as AuthContext,
+    events: {} as AuthEvent,
+  },
+}).createMachine({
+  id: 'auth',
+  initial: 'idle',
+  context: {
+    email: '',
+    error: null,
+  },
+  states: {
+    idle: {
+      on: {
+        SUBMIT: {
+          target: 'loading',
+          actions: assign({
+            email: ({ event }) => {
+              if (event.type === 'SUBMIT') return event.email;
+              return '';
+            },
+            error: null,
+          }),
         },
-      },
-      loading: {
-        on: {
-          SUCCESS: 'success',
-          ERROR: {
-            target: 'error',
-            actions: assign({
-              error: (context, event) => event.error,
-            }),
-          },
-        },
-      },
-      error: {
-        on: {
-          SUBMIT: {
-            target: 'loading',
-            actions: assign({
-              email: (context, event) => event.email,
-              error: null,
-            }),
-          },
-          RESET: 'idle',
-        },
-      },
-      success: {
-        type: 'final',
       },
     },
-  }
-);
+    loading: {
+      on: {
+        SUCCESS: 'success',
+        ERROR: {
+          target: 'error',
+          actions: assign({
+            error: ({ event }) => {
+              if (event.type === 'ERROR') return event.error;
+              return null;
+            },
+          }),
+        },
+      },
+    },
+    error: {
+      on: {
+        SUBMIT: {
+          target: 'loading',
+          actions: assign({
+            email: ({ event }) => {
+              if (event.type === 'SUBMIT') return event.email;
+              return '';
+            },
+            error: null,
+          }),
+        },
+        RESET: 'idle',
+      },
+    },
+    success: {
+      type: 'final',
+    },
+  },
+});

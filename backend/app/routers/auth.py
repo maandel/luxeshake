@@ -65,10 +65,6 @@ limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-# ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
-
 
 def _generate_otp() -> str:
     """Cryptographically secure 6-digit OTP."""
@@ -91,17 +87,9 @@ async def _issue_tokens(
     db: AsyncSession,
     family_id: uuid.UUID | None = None,
 ) -> Token:
-    """
-    Issue a new access + refresh token pair.
-    Stores the refresh token hash in the DB for rotation tracking.
-    """
     access_token = create_access_token(data={"sub": str(user.id), "role": user.role})
-
-    # Generate a cryptographically secure refresh token
     raw_refresh = secrets.token_urlsafe(48)
     token_hash = _hash_token(raw_refresh)
-
-    # Persist hashed refresh token with a new or carried-over family_id
     rt = RefreshToken(
         user_id=user.id,
         token_hash=token_hash,
@@ -110,9 +98,8 @@ async def _issue_tokens(
         + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
     db.add(rt)
-    await db.flush()  # get the record into DB within the current transaction
+    await db.flush()
 
-    # Set the raw token in an HttpOnly cookie — never returned in body
     response.set_cookie(
         key="refresh_token",
         value=raw_refresh,
@@ -120,14 +107,9 @@ async def _issue_tokens(
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
         samesite="none",
         secure=True,
+        domain=settings.ACTIVE_COOKIE_DOMAIN,
     )
-
     return Token(access_token=access_token, token_type="bearer", role=user.role)
-
-
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
 
 
 @router.post(
@@ -169,7 +151,6 @@ async def register(
     await db.commit()
     await db.refresh(new_user)
 
-    # Link any guest orders placed with this email before registration
     from app.models.order import Order
 
     await db.execute(
@@ -222,7 +203,6 @@ async def login(
         or not user.password_hash
         or not verify_password(login_in.password, user.password_hash)
     ):
-        # Audit failed login without exposing whether the email exists
         await audit(
             db,
             LOGIN_FAILED,
@@ -243,7 +223,6 @@ async def login(
         )
 
     if not user.is_email_verified:
-        # Regenerate verification token on each login attempt for unverified users
         user.email_verification_token = secrets.token_urlsafe(32)
         await db.commit()
         background_tasks.add_task(
@@ -282,12 +261,6 @@ async def refresh(
     response: Response,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Rotate the refresh token.
-    - Validate the incoming token exists and is not revoked.
-    - If a REVOKED token is presented → reuse detected → revoke entire family.
-    - Issue a new token pair and revoke the old token.
-    """
     raw_token = request.cookies.get("refresh_token")
     if not raw_token:
         raise HTTPException(
@@ -297,7 +270,6 @@ async def refresh(
 
     token_hash = _hash_token(raw_token)
 
-    # Look up the token by hash
     rt_res = await db.execute(
         select(RefreshToken).where(RefreshToken.token_hash == token_hash)
     )
@@ -305,8 +277,6 @@ async def refresh(
 
     if not rt:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
-
-    # Reuse detection — if this token is already revoked, invalidate the whole family
     if rt.is_revoked:
         await audit(
             db,
@@ -314,37 +284,26 @@ async def refresh(
             user_id=rt.user_id,
             ip_address=request.client.host if request.client else None,
         )
-        # Revoke all tokens in the family
         await db.execute(
             update(RefreshToken)
             .where(RefreshToken.family_id == rt.family_id)
             .values(is_revoked=True)
         )
         await db.commit()
-        # Clear the cookie
         response.delete_cookie("refresh_token", samesite="none", secure=True)
         raise HTTPException(
             status_code=401,
             detail="Refresh token reuse detected. All sessions invalidated for security.",
         )
-
-    # Check expiry
     if rt.expires_at < datetime.now(UTC):
         raise HTTPException(status_code=401, detail="Refresh token expired")
-
-    # Fetch the user
     user_res = await db.execute(select(User).where(User.id == rt.user_id))
     user = user_res.scalars().first()
     if not user or not user.is_active:
         raise HTTPException(status_code=401, detail="User not found or inactive")
-
-    # Revoke the consumed token (rotation)
     rt.is_revoked = True
-
-    # Issue a new pair, carrying the same family_id for chain tracking
     token = await _issue_tokens(user, response, db, family_id=rt.family_id)
     await db.commit()
-
     return token
 
 
@@ -352,7 +311,6 @@ async def refresh(
 async def logout(
     request: Request, response: Response, db: AsyncSession = Depends(get_db)
 ):
-    """Revoke the current refresh token and clear the cookie."""
     raw_token = request.cookies.get("refresh_token")
     if raw_token:
         token_hash = _hash_token(raw_token)
@@ -370,7 +328,12 @@ async def logout(
             )
             await db.commit()
 
-    response.delete_cookie("refresh_token", samesite="none", secure=True)
+    response.delete_cookie(
+        "refresh_token",
+        samesite="none",
+        secure=True,
+        domain=settings.ACTIVE_COOKIE_DOMAIN,
+    )
     return {"detail": "Successfully logged out"}
 
 
@@ -385,7 +348,6 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(
             status_code=400, detail="Invalid or expired verification token"
         )
-
     user.is_email_verified = True
     user.email_verification_token = None
     await audit(db, EMAIL_VERIFIED, user_id=user.id)
@@ -420,7 +382,6 @@ async def resend_verification(
             token=user.email_verification_token,
         )
 
-    # Always return same response to prevent email enumeration
     return {
         "detail": "If your email is registered and unverified, a new verification link has been sent."
     }
@@ -444,8 +405,8 @@ async def forgot_password_request(
     user = result.scalars().first()
 
     if user and user.is_active:
-        otp = _generate_otp()  # Cryptographically secure
-        user.password_reset_otp = _hash_otp(otp)  # Store hash, not plaintext
+        otp = _generate_otp()
+        user.password_reset_otp = _hash_otp(otp)
         user.password_reset_otp_expires = datetime.now(UTC) + timedelta(minutes=15)
         await audit(
             db,
@@ -459,8 +420,6 @@ async def forgot_password_request(
         background_tasks.add_task(
             EmailService.send_password_reset_otp, email=user.email, otp=otp
         )
-
-    # Always return same response to prevent email enumeration
     return {"detail": "If the email is registered, a 6-digit OTP has been sent."}
 
 
@@ -485,9 +444,7 @@ async def forgot_password_verify(
     if (
         not user
         or not user.password_reset_otp
-        or not secrets.compare_digest(
-            user.password_reset_otp, otp_hash
-        )  # Constant-time compare
+        or not secrets.compare_digest(user.password_reset_otp, otp_hash)
     ):
         raise HTTPException(status_code=400, detail="Invalid OTP")
 
@@ -495,14 +452,10 @@ async def forgot_password_verify(
         tzinfo=UTC
     ) < datetime.now(UTC):
         raise HTTPException(status_code=400, detail="OTP has expired")
-
-    # Issue a short-lived reset token
     reset_token = create_access_token(
         data={"sub": str(user.id), "reset": True},
         expires_delta=timedelta(minutes=10),
     )
-
-    # Consume the OTP immediately (single-use)
     user.password_reset_otp = None
     user.password_reset_otp_expires = None
     await db.commit()
@@ -561,11 +514,6 @@ async def google_auth(
     response: Response,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Google OAuth via ID Token.
-    The frontend sends the `credential` string from Google's Sign-In button.
-    We verify it server-side with Google's public keys — no client data is trusted.
-    """
     from google.auth.transport import requests as google_requests
     from google.oauth2 import id_token
 
@@ -586,19 +534,15 @@ async def google_auth(
     google_id = id_info.get("sub")
     full_name = id_info.get("name", "Google User")
     email_verified = id_info.get("email_verified", False)
-
     if not email or not google_id or not email_verified:
         raise HTTPException(
             status_code=400,
             detail="Google account does not have a verified email",
         )
-
     from sqlalchemy import func
 
-    # Try to find existing user by google_id first, then by email
     result = await db.execute(select(User).where(User.google_id == google_id))
     user = result.scalars().first()
-
     if not user:
         result_email = await db.execute(
             select(User).where(func.lower(User.email) == email)
@@ -618,8 +562,6 @@ async def google_auth(
             )
             db.add(user)
         await db.flush()
-
-        # Link any guest orders
         from app.models.order import Order
 
         await db.execute(

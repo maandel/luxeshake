@@ -20,6 +20,27 @@ class Settings(BaseSettings):
 
     # Frontend
     FRONTEND_URL: str = "http://localhost:3000"
+    # Optional: explicit cookie domain override (e.g. ".mandell.tech" for cross-subdomain).
+    # If not set, it is derived automatically from FRONTEND_URL.
+    COOKIE_DOMAIN: str = ""
+
+    @property
+    def ACTIVE_COOKIE_DOMAIN(self) -> "str | None":
+        """Return the shared parent domain for cross-subdomain cookies, or None for localhost."""
+        if self.COOKIE_DOMAIN:
+            return self.COOKIE_DOMAIN
+        try:
+            from urllib.parse import urlparse
+
+            host = urlparse(self.FRONTEND_URL).hostname or ""
+            # Only set a domain for real TLDs (not localhost / IPs)
+            if host and "." in host and not host.replace(".", "").isdigit():
+                parts = host.split(".")
+                # Use the last two parts: mandell.tech → .mandell.tech
+                return "." + ".".join(parts[-2:])
+        except Exception:
+            pass
+        return None
 
     # Google OAuth
     GOOGLE_CLIENT_ID: str = ""

@@ -36,10 +36,8 @@ export default function LuxeControlLoginPage() {
         return;
       }
       showToast('Welcome back to Luxe Control.', 'success');
-      setTimeout(() => {
-        setAuth(resp.data.access_token, userRole);
-        router.push('/luxe-control/dashboard');
-      }, 800);
+      setAuth(resp.data.access_token, userRole);
+      router.push('/luxe-control/dashboard');
     } catch (err: any) {
       showToast(err.response?.data?.detail || 'Incorrect credentials.', 'error');
     } finally {
